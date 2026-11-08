@@ -1,0 +1,301 @@
+[
+  {
+    "token": "ChatGDP",
+    "count": 51,
+    "files": [
+      "W07_L01_Video.json",
+      "W07_L02_Video.json"
+    ]
+  },
+  {
+    "token": "TF-IDF",
+    "count": 48,
+    "files": [
+      "W03_Video.json",
+      "W04_L01_Video.json"
+    ]
+  },
+  {
+    "token": "BERT",
+    "count": 37,
+    "files": [
+      "W01_L01_Video.json",
+      "W01_L02_Video.json",
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "LSTM",
+    "count": 22,
+    "files": [
+      "W05_L01_Video.json",
+      "W06_L01_Video.json"
+    ]
+  },
+  {
+    "token": "RNNs",
+    "count": 18,
+    "files": [
+      "W01_L01_Video.json",
+      "W01_L02_Video.json",
+      "W05_L01_Video.json"
+    ]
+  },
+  {
+    "token": "GPT-3",
+    "count": 15,
+    "files": [
+      "W01_L01_Video.json",
+      "W01_L02_Video.json",
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "Word2Vec",
+    "count": 14,
+    "files": [
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "NEDs",
+    "count": 13,
+    "files": [
+      "W02_Video.json"
+    ]
+  },
+  {
+    "token": "LSTMs",
+    "count": 12,
+    "files": [
+      "W01_L01_Video.json",
+      "W01_L02_Video.json",
+      "W05_L01_Video.json"
+    ]
+  },
+  {
+    "token": "AI-generated",
+    "count": 9,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  },
+  {
+    "token": "GRUs",
+    "count": 9,
+    "files": [
+      "W05_L01_Video.json",
+      "W06_L01_Video.json"
+    ]
+  },
+  {
+    "token": "XLNet",
+    "count": 9,
+    "files": [
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "ChatGPT",
+    "count": 8,
+    "files": [
+      "W01_L01_Video.json",
+      "W01_L02_Video.json",
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "GRU",
+    "count": 8,
+    "files": [
+      "W05_L01_Video.json",
+      "W06_L01_Video.json"
+    ]
+  },
+  {
+    "token": "GANs",
+    "count": 7,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  },
+  {
+    "token": "NLTK",
+    "count": 7,
+    "files": [
+      "W01_L01_Video.json",
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "SGD",
+    "count": 7,
+    "files": [
+      "W05_L02_Video.json"
+    ]
+  },
+  {
+    "token": "BLUE",
+    "count": 6,
+    "files": [
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "BPE",
+    "count": 6,
+    "files": [
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "GLOVE",
+    "count": 6,
+    "files": [
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "GPT-4",
+    "count": 6,
+    "files": [
+      "W01_L02_Video.json",
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "PLSA",
+    "count": 6,
+    "files": [
+      "W03_Video.json"
+    ]
+  },
+  {
+    "token": "METEOR",
+    "count": 5,
+    "files": [
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "RBF",
+    "count": 5,
+    "files": [
+      "W04_L01_Video.json"
+    ]
+  },
+  {
+    "token": "RMS",
+    "count": 5,
+    "files": [
+      "W05_L02_Video.json"
+    ]
+  },
+  {
+    "token": "AUC",
+    "count": 4,
+    "files": [
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "DeepMind",
+    "count": 4,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  },
+  {
+    "token": "ELM",
+    "count": 4,
+    "files": [
+      "W04_L01_Video.json"
+    ]
+  },
+  {
+    "token": "ELMs",
+    "count": 4,
+    "files": [
+      "W04_L01_Video.json"
+    ]
+  },
+  {
+    "token": "GenSim",
+    "count": 4,
+    "files": [
+      "W03_Video.json",
+      "W04_L02_Video.json"
+    ]
+  },
+  {
+    "token": "GPT-1",
+    "count": 4,
+    "files": [
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "InstructGPT",
+    "count": 4,
+    "files": [
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "SVMs",
+    "count": 4,
+    "files": [
+      "W04_L01_Video.json"
+    ]
+  },
+  {
+    "token": "XGBoost",
+    "count": 4,
+    "files": [
+      "W07_L01_Video.json"
+    ]
+  },
+  {
+    "token": "AI-driven",
+    "count": 3,
+    "files": [
+      "W01_L02_Video.json",
+      "W07_L02_Video.json"
+    ]
+  },
+  {
+    "token": "Auto-Regressive",
+    "count": 3,
+    "files": [
+      "W06_L02_Video.json"
+    ]
+  },
+  {
+    "token": "ChatGDP-based",
+    "count": 3,
+    "files": [
+      "W07_L01_Video.json"
+    ]
+  },
+  {
+    "token": "CNNs",
+    "count": 3,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  },
+  {
+    "token": "DALI",
+    "count": 3,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  },
+  {
+    "token": "ELISA",
+    "count": 3,
+    "files": [
+      "W01_L02_Video.json"
+    ]
+  }
+]

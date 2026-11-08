@@ -1,0 +1,30 @@
+# Core runtime -- light, no deep-learning wheels. `pip install -r requirements.txt`
+# Heavy local-embedding / transformer deps live in requirements-ml.txt.
+
+# --- app / UI (rubric requires a Streamlit front-end) ---
+streamlit>=1.40
+plotly>=5.24
+streamlit-agraph>=0.0.45
+
+# --- LLM access (OpenAI-compatible: OpenAI / DeepSeek / Qwen / vLLM / Ollama) ---
+openai>=1.54
+python-dotenv>=1.0
+
+# --- data ---
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+
+# --- document loaders (P0 data processing) ---
+pypdf>=5.0
+python-pptx>=1.0
+python-docx>=1.1
+beautifulsoup4>=4.12
+markdown-it-py>=3.0
+
+# --- knowledge graph (P3) ---
+networkx>=3.3
+pyvis>=0.3.2
+
+# --- misc ---
+tqdm>=4.66

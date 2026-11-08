@@ -1,0 +1,171 @@
+[
+  {
+    "file": "W02_Video.json",
+    "source": "W02/W02_Video.mp4",
+    "week": "W02",
+    "start": 127.67,
+    "end": 133.63,
+    "count": 13,
+    "text": "NEDs.",
+    "original_segments": [
+      {
+        "start": 127.67,
+        "end": 127.81,
+        "text": "NEDs."
+      },
+      {
+        "start": 127.81,
+        "end": 127.87,
+        "text": "NEDs."
+      },
+      {
+        "start": 127.87,
+        "end": 127.89,
+        "text": "NEDs."
+      },
+      {
+        "start": 128.25,
+        "end": 128.27,
+        "text": "NEDs."
+      },
+      {
+        "start": 128.27,
+        "end": 128.57,
+        "text": "NEDs."
+      },
+      {
+        "start": 128.57,
+        "end": 128.59,
+        "text": "NEDs."
+      },
+      {
+        "start": 129.01,
+        "end": 130.95,
+        "text": "NEDs."
+      },
+      {
+        "start": 130.95,
+        "end": 132.27,
+        "text": "NEDs."
+      },
+      {
+        "start": 132.27,
+        "end": 133.09,
+        "text": "NEDs."
+      },
+      {
+        "start": 133.09,
+        "end": 133.17,
+        "text": "NEDs."
+      },
+      {
+        "start": 133.17,
+        "end": 133.29,
+        "text": "NEDs."
+      },
+      {
+        "start": 133.29,
+        "end": 133.35,
+        "text": "NEDs."
+      },
+      {
+        "start": 133.35,
+        "end": 133.63,
+        "text": "NEDs."
+      }
+    ]
+  },
+  {
+    "file": "W03_Video.json",
+    "source": "W03/W03_Video.mp4",
+    "week": "W03",
+    "start": 297.78,
+    "end": 302.68,
+    "count": 4,
+    "text": "TF-IDF is a relatively efficient way of using TF-IDF.",
+    "original_segments": [
+      {
+        "start": 297.78,
+        "end": 299.78,
+        "text": "TF-IDF is a relatively efficient way of using TF-IDF."
+      },
+      {
+        "start": 299.78,
+        "end": 299.84,
+        "text": "TF-IDF is a relatively efficient way of using TF-IDF."
+      },
+      {
+        "start": 299.84,
+        "end": 299.86,
+        "text": "TF-IDF is a relatively efficient way of using TF-IDF."
+      },
+      {
+        "start": 300.18,
+        "end": 302.68,
+        "text": "TF-IDF is a relatively efficient way of using TF-IDF."
+      }
+    ]
+  },
+  {
+    "file": "W05_L01_Video.json",
+    "source": "W05/W05_L01_Video.mp4",
+    "week": "W05",
+    "start": 512.34,
+    "end": 517.61,
+    "count": 4,
+    "text": "Long short-term memory is also a problem.",
+    "original_segments": [
+      {
+        "start": 512.34,
+        "end": 517.37,
+        "text": "Long short-term memory is also a problem."
+      },
+      {
+        "start": 517.37,
+        "end": 517.41,
+        "text": "Long short-term memory is also a problem."
+      },
+      {
+        "start": 517.41,
+        "end": 517.45,
+        "text": "Long short-term memory is also a problem."
+      },
+      {
+        "start": 517.45,
+        "end": 517.61,
+        "text": "Long short-term memory is also a problem."
+      }
+    ]
+  },
+  {
+    "file": "W05_L01_Video.json",
+    "source": "W05/W05_L01_Video.mp4",
+    "week": "W05",
+    "start": 918.71,
+    "end": 923.07,
+    "count": 4,
+    "text": "which is a streamlined version of LSTM, with a simpler architecture.",
+    "original_segments": [
+      {
+        "start": 918.71,
+        "end": 920.31,
+        "text": "which is a streamlined version of LSTM, with a simpler architecture."
+      },
+      {
+        "start": 920.31,
+        "end": 920.87,
+        "text": "which is a streamlined version of LSTM, with a simpler architecture."
+      },
+      {
+        "start": 920.87,
+        "end": 921.23,
+        "text": "which is a streamlined version of LSTM, with a simpler architecture."
+      },
+      {
+        "start": 921.23,
+        "end": 923.07,
+        "text": "which is a streamlined version of LSTM, with a simpler architecture."
+      }
+    ]
+  }
+]

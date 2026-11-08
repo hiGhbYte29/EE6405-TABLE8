@@ -1,0 +1,49 @@
+# Which systems to compare, and on what.
+#
+# Each entry under `systems` becomes one row of the results table.
+#   use_rag:     False  -> the "without rag" ablation (plain LLM, no retrieval)
+#   use_memory:  False  -> the "without memory" ablation
+#   retriever:   bm25 | dense | hybrid
+#   model:       any model id your EE6405_LLM_BASE_URL serves; omit for the default
+#
+# Baseline rows just point at a different model with use_rag: false. To compare
+# a different *provider*, change EE6405_LLM_BASE_URL in .env and re-run with
+# --only <name>, then merge the CSVs.
+
+top_k: 5
+index_path: data/processed/index.sqlite
+eval_set: data/eval/questions.jsonl
+
+systems:
+  # ---- our system ----
+  ours_hybrid:
+    use_rag: true
+    use_memory: true
+    retriever: hybrid
+
+  # ---- retrieval ablation ----
+  ours_bm25:
+    use_rag: true
+    use_memory: true
+    retriever: bm25
+
+  ours_dense:
+    use_rag: true
+    use_memory: true
+    retriever: dense
+
+  # ---- component ablation ----
+  without_rag:
+    use_rag: false
+    use_memory: true
+
+  without_memory:
+    use_rag: true
+    use_memory: false
+    retriever: hybrid
+
+  # ---- baseline: bare LLM, no retrieval, no memory ----
+  # llm_only_gpt:
+  #   use_rag: false
+  #   use_memory: false
+  #   model: gpt-4o-mini

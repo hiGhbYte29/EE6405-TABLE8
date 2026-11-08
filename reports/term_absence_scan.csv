@@ -1,0 +1,19 @@
+term,reference_count,transcript_correct_count,suspect_count,status
+ELIZA,3,2,3,present
+Weizenbaum,0,0,1,present
+DALL-E,2,0,3,absent_or_low
+Midjourney,1,0,3,absent_or_low
+RMSprop,58,0,5,absent_or_low
+Transformer,299,36,0,present
+Attention,265,49,0,present
+ChatGPT,140,8,51,present
+Stable Diffusion,1,3,0,present
+GCN,18,0,0,absent_or_low
+GAT,352,92,0,present
+BERT,339,38,0,present
+RoBERTa,49,0,10,absent_or_low
+TF-IDF,193,48,0,present
+LSTM,264,34,0,present
+GRU,183,17,0,present
+CRF,8,0,0,absent_or_low
+RAG,188,46,0,present

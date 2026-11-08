@@ -1,0 +1,6 @@
+# Dev / test / notebook tooling.
+pytest>=8.3
+ruff>=0.7
+ipykernel>=6.29
+jupyter>=1.1
+nbformat>=5.10
