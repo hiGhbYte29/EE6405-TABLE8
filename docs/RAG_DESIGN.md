@@ -251,3 +251,40 @@ recall@k、precision@k、MRR、nDCG@k（已实现于 `src/ee6405/eval/metrics.py
 - [ ] 取得 DeepSeek 与 Qwen 两家公网 key
 - [ ] 评测配置改为支持多 provider（按系统指定 base_url / key 环境变量）
 - [ ] 在两家公网 API 上复跑全部评测，产出报告最终数字
+
+## 10. 组员接手：直接调用学习助手
+
+```python
+from ee6405.agent.chain import StudyAssistant
+from ee6405.agent.llm import build_llm
+from ee6405.rag.retriever import build_retriever
+from ee6405.rag.store import ChunkStore
+
+store = ChunkStore("data/processed/index.sqlite", read_only=True)
+retriever = build_retriever(store, "hybrid")  # also: "bm25" or "dense"
+assistant = StudyAssistant(retriever=retriever, llm=build_llm())
+
+answer = assistant.answer("What is the purpose of TF-IDF?", use_rag=True, use_memory=False)
+print(answer.text)
+print(answer.citations)  # source#chunk-position references
+
+# Both switches are per request. A memory object can be supplied to retain turns.
+answer_without_rag = assistant.answer("What is TF-IDF?", use_rag=False)
+answer_without_memory = assistant.answer("What is TF-IDF?", use_memory=False)
+store.close()
+```
+
+`StudyAssistant` formats retrieved chunks as numbered context blocks and the
+LLM can cite them as `[1]`, `[2]`, etc. Set `EE6405_LLM_BASE_URL`,
+`EE6405_LLM_API_KEY`, and `EE6405_LLM_MODEL` in `.env` before calling
+`build_llm()`.
+
+### MCQ 评测解释
+
+当前 47 道题按来源文件生成唯一题号（例如 `W04_Part1_Q2`），因此四组结果可以逐题配对。qwen3.8-max 内网网关的一轮结果为：no-RAG 33/47 (70.21%)、BM25 37/47 (78.72%)、dense 38/47 (80.85%)、hybrid 37/47 (78.72%)；四组的 `mcq_hits` 均为 0。相对 no-RAG 的精确 McNemar 检验 p 值分别为 BM25 0.2188、dense 0.0625、hybrid 0.1250。样本量只有 47 题，当前结果应表述为约 6--11 个百分点的提升趋势，尚不足以支持强结论，需要更大的题集。
+
+两轮独立运行的对比也说明了样本量问题：同一配置下 no-RAG 第一轮 34/47、第二轮 33/47，
+而三个 RAG 组两轮完全一致（37/38/37）。单题的运行间波动与上面观察到的组间差距处于同一量级，
+这进一步说明当前结论只能作为趋势，不能作为定论。第一轮结果保留在 `reports/mcq_eval_v1.csv`。
+
+dense 组的 235 个检索结果中，182 个来自 notebook、43 个来自 slides、10 个来自 assessment PDF。该分布与本批题目包含大量代码题有关；slides 占比较低不代表其对概念问题没有价值，也说明这批 MCQ 不能代表学习助手的全部使用场景。

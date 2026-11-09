@@ -43,3 +43,6 @@ reports/figures/*
 # ---- OS ----
 .DS_Store
 Thumbs.db
+
+# nested dev worktree (local only)
+.worktrees/
