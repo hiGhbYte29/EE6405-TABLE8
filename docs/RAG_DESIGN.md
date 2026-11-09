@@ -12,7 +12,7 @@
 | `01_Lecture_Slides & Activities/` | 34 个 PDF（W01–W11）+ 3 个讲师澄清 txt | 954 页 |
 | `02_Lecture_Videos/` | 12 个 mp4（W01–W07），已完成 12/12 转写 | 784 MB；转写 5.70 h、44,451 词 |
 | `03_Code/` | 24 个 ipynb（每周 New/Old 两版） | — |
-| `04_Assessments/` | 10 对 MCQ(.md)+答案(.txt)、5 个 Coding Quiz PDF、6 个 IRA/TRA PDF | 61 页 |
+| `04_Assessments/` | 10 对 MCQ(.md)+答案(.txt)、5 个 Coding Quiz PDF、6 个 IRA/TRA PDF | 61 页；3 个 Coding Quiz 已由 OCR 按页并入 |
 | `05_Miscellaneous/` | Syllabus、Group Project Details | 15 页 |
 
 实测结论：
@@ -102,7 +102,7 @@
 | `mcq` | 每题一条（题干与答案存在一起） | `q:<题号>` |
 | `assessment_pdf` | 按页 | `page:<页码>` |
 | `misc` | 按页 | `page:<页码>` |
-| `transcript` | 时间窗口（12 个视频已转写） | `t:<mm:ss>` |
+| `transcript` | 连续 ASR segment 按约 800 字符、60--90 秒窗口合并，并在 segment 句末切分；使用 `text_corrected` | `t:mm:ss` |
 
 ### clarification 解析的坑
 
@@ -133,7 +133,7 @@ numpy 暴力余弦检索的延迟可忽略，不需要 ANN 索引。
 ### 实测构建结果
 
 ```
-python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
+PYTHONPATH=src python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
 ```
 
 | modality | chunks | 源文件核对 |
@@ -141,12 +141,13 @@ python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
 | slides | 943 | 34 个 PDF / 954 页，11 页抽取为空（纯图片页）已跳过 |
 | notebook | 479 | 24 个 ipynb 的语义单元 |
 | mcq | 47 | 10 个 md 共 47 题，全部入库 |
-| assessment_pdf | 44 | 11 个 PDF / 61 页，空页已跳过 |
+| assessment_pdf | 59 | 11 个 PDF / 61 页，另含 3 个 OCR Coding Quiz 共 17 页 |
 | misc | 15 | 2 个 PDF / 15 页 |
 | clarification | 5 | 3 个 txt 共 5 条，全部入库 |
-| **合计** | **1533** | 索引文件约 5 MB |
+| transcript | 308 | 12 个 corrected JSON，按时间窗口合并 |
+| **合计** | **1858** | 含 1858 个 embedding |
 
-视频文件已完成转写，尚未并入索引；并入后将新增 `transcript` 模态。
+视频转写已按时间窗口并入索引；构建命令会自动发现 `data/interim/transcripts_corrected/`，也可用 `--transcripts` 指定目录。
 
 ## 6. 检索
 
@@ -240,7 +241,7 @@ recall@k、precision@k、MRR、nDCG@k（已实现于 `src/ee6405/eval/metrics.py
 
 ## 9. 待办
 
-- [x] 视频已转写（12 个视频、`large-v3`/`float16`）；待并入 `transcript` 模态并接入索引（带时间戳）
+- [x] 视频已转写（12 个视频、`large-v3`/`float16`）并并入 `transcript` 模态索引（`text_corrected`、带时间戳）
 - [ ] 生成链路接入真实 LLM（当前 `EchoLLM` 为离线占位）
 - [ ] 评测脚本接入 MCQ 评测集，落实 mcq 模态排除
 - [ ] 长期 memory（`without memory` 消融依赖它）

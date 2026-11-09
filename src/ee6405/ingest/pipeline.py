@@ -13,7 +13,7 @@ from pathlib import Path
 
 from ee6405.config import settings
 from ee6405.ingest.chunking import chunk_document
-from ee6405.ingest.loaders import load_tree
+from ee6405.ingest.loaders import load_coding_quiz_ocr_tree, load_transcript_tree, load_tree
 from ee6405.rag.embedding import build_embedder
 from ee6405.rag.store import ChunkStore
 from ee6405.types import Chunk
@@ -30,6 +30,8 @@ def build_index(
     embed: bool = True,
     embed_backend: str | None = None,
     modalities: set[str] | None = None,
+    transcripts: Path | None = None,
+    coding_quiz_ocr: Path | None = None,
 ) -> dict[str, int]:
     store = ChunkStore(index_path)
     if rebuild:
@@ -43,6 +45,22 @@ def build_index(
         all_chunks.extend(chunks)
         log.info("%-60s %-10s %4d chunks", doc.metadata.get("filename", doc.source),
                  doc.modality, len(chunks))
+
+    if transcripts is not None and transcripts.exists() and (modalities is None or "transcript" in modalities):
+        for doc in load_transcript_tree(transcripts, chunk_size=chunk_size):
+            n_docs += 1
+            chunks = chunk_document(doc, chunk_size, chunk_overlap)
+            all_chunks.extend(chunks)
+            log.info("%-60s %-10s %4d chunks", doc.metadata.get("filename", doc.source),
+                     doc.modality, len(chunks))
+
+    if coding_quiz_ocr is not None and coding_quiz_ocr.exists() and (modalities is None or "assessment_pdf" in modalities):
+        for doc in load_coding_quiz_ocr_tree(coding_quiz_ocr):
+            n_docs += 1
+            chunks = chunk_document(doc, chunk_size, chunk_overlap)
+            all_chunks.extend(chunks)
+            log.info("%-60s %-10s %4d chunks", doc.metadata.get("filename", doc.source),
+                     doc.modality, len(chunks))
 
     store.add_chunks(all_chunks)
 
@@ -76,7 +94,13 @@ def main() -> None:
     p.add_argument("--no-embed", dest="embed", action="store_false",
                    help="skip embeddings (BM25-only index, much faster)")
     p.add_argument("--embed-backend", default=None, choices=["local", "bge-m3", "api", "hashing"])
-    p.add_argument("--modality", action="append", choices=["slides", "clarification", "notebook", "mcq", "assessment_pdf", "misc"], help="build only selected modality (repeatable)")
+    p.add_argument("--transcripts", type=Path,
+                   default=settings.data_dir / "interim" / "transcripts_corrected",
+                   help="directory of corrected transcript JSON files")
+    p.add_argument("--coding-quiz-ocr", type=Path,
+                   default=settings.data_dir / "interim" / "coding_quiz_ocr",
+                   help="directory of OCR markdown coding quizzes")
+    p.add_argument("--modality", action="append", choices=["slides", "clarification", "notebook", "mcq", "assessment_pdf", "misc", "transcript"], help="build only selected modality (repeatable)")
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args()
 
@@ -101,6 +125,8 @@ def main() -> None:
         embed=args.embed,
         embed_backend=args.embed_backend,
         modalities=set(args.modality) if args.modality else None,
+        transcripts=args.transcripts,
+        coding_quiz_ocr=args.coding_quiz_ocr,
     )
     print(f"index: {args.index}")
     for key, value in summary.items():

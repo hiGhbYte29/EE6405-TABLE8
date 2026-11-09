@@ -5,15 +5,29 @@
 v10.30.1
 # 1. 如何使用这个项目🚀
 
-1. 在上方项目标题右边找到“frok”，将仓库frok到自己的GitHub仓库中
+**统一在本仓库开分支协作，不用 fork。** 需要 push 权限的话，找组长把你加成 collaborator。
 
-2. 将自己的frok仓库克隆到任意你想要保存的文件夹中
-~~~
-# 选择在终端中打开文件夹
-git clone “仓库HTTPs”
+1. 克隆仓库
+
+~~~bash
+git clone https://github.com/hiGhbYte29/EE6405-TABLE8.git
+cd EE6405-TABLE8
 ~~~
 
-3. 提交修改先从本地push到自己的仓库，在从自己的仓库PR到"hiGhbYte29/EE6405-TABLE8"的"dev"分支
+2. 从 `main` 开一个自己的分支，分支名用自己的名字
+
+~~~bash
+git checkout -b <你的名字> main
+~~~
+
+3. 提交后 push 到同名分支，再从该分支向 `dev` 提 PR
+
+~~~bash
+git push -u origin <你的名字>
+~~~
+
+> `main` 和 `dev` 都不要直接 push，`main` 由组长从 `dev` 合并。
+> 要在已有的 RAG 代码上做开发，见下面第 3 节的部署说明。
 
 # 2. Project Detail📖
 
@@ -48,11 +62,162 @@ git clone “仓库HTTPs”
 - **小组反思文档**：说明每位组员的贡献，并签字。
 - **生成式 AI（GAI）使用声明表**：使用提供的模板。
 
-# 3. 项目结构🏠
-~~~
-EE6405-TABLE8
-|
+# 3. 快速部署（学习助手 RAG）🚀
+
+学习助手的检索后端已经可用。**前端、知识图谱等功能可以直接在它之上开发，不需要自己重建索引。**
+
+## 3.1. 为什么需要额外的部署包
+
+课程原始资料（841 MB）和构建好的索引（二进制）都没有提交到 Git，原因：
+
+- 体积过大，不适合 Git 管理
+- 索引是可重新生成的构建产物
+
+所以仓库里只有代码。要跑起来，需要另外拿一份 **`EE6405_RAG_Bundle.zip`**（约 25 MB），里面是已经建好的索引和转写结果。
+
+> **去哪里拿**：问 CHENYUHONG 要，或从群里下载。
+
+## 3.2. 部署步骤
+
+### 第一步：克隆并建环境
+
+~~~bash
+git clone https://github.com/hiGhbYte29/EE6405-TABLE8.git
+cd EE6405-TABLE8
+git checkout yuhong          # RAG 相关代码在这个分支
+
+conda create -n ee6405 python=3.11 -y
+conda activate ee6405
+pip install -r requirements.txt
+pip install -e .
 ~~~
 
-下周要有初步Idea（“**第 12 周安排项目咨询**：请带上草稿或初步想法。”）
-可以把自己的idea放到"/Idea/..."目录下
+> `requirements-ml.txt` 里的 torch / sentence-transformers 体积很大（约 3 GB）。
+> **只用现成索引做开发的话不需要装**，只有要重建索引时才需要。
+
+### 第二步：解压部署包
+
+把 `EE6405_RAG_Bundle.zip` 解压到仓库根目录：
+
+~~~bash
+unzip EE6405_RAG_Bundle.zip -d .
+~~~
+
+解压后应该出现：
+
+~~~
+data/processed/index.sqlite              # 已建好的索引
+data/interim/transcripts_corrected/      # 课程视频转写（带时间戳）
+~~~
+
+### 第三步：配置模型接口
+
+~~~bash
+cp .env.example .env
+~~~
+
+编辑 `.env` 填入可用的 API（任何 OpenAI 兼容接口都行，例如 DeepSeek、通义千问）：
+
+~~~
+EE6405_LLM_BASE_URL=https://api.deepseek.com
+EE6405_LLM_API_KEY=你的key
+EE6405_LLM_MODEL=deepseek-chat
+~~~
+
+`.env` 已被 `.gitignore` 排除，**不要把 key 提交上去**。
+
+### 第四步：验证
+
+~~~bash
+python -c "
+from ee6405.rag.store import ChunkStore
+s = ChunkStore('data/processed/index.sqlite')
+print('索引 chunk 数:', s.count())
+for h in s.search_bm25('what is retrieval augmented generation', 3):
+    print(' ', h[0].modality, h[0].source.split('/')[-1], h[0].locator)
+"
+~~~
+
+能打印出 chunk 数和检索结果就说明部署成功。
+
+## 3.3. 怎么调用
+
+~~~python
+from ee6405.rag.store import ChunkStore
+from ee6405.rag.retriever import build_retriever
+from ee6405.agent.chain import StudyAssistant
+from ee6405.agent.llm import build_llm
+
+store = ChunkStore("data/processed/index.sqlite")
+assistant = StudyAssistant(
+    retriever=build_retriever(store, "bm25"),   # bm25 | dense | hybrid
+    llm=build_llm(),
+)
+
+ans = assistant.answer("What is the difference between BERT and RoBERTa?")
+print(ans.text)
+print(ans.citations)      # 引用来源，可以在前端展示
+~~~
+
+更详细的用法（记忆开关、消融配置）见 [`docs/RAG_DESIGN.md`](docs/RAG_DESIGN.md)。
+
+> **检索器怎么选**：`bm25` 不需要额外依赖，开发调试最方便。
+> `dense` 和 `hybrid` 需要加载 BGE-m3 模型（约 2.2 GB，首次自动下载），
+> 跨语言检索效果更好（中文提问也能检索英文课件）。
+
+## 3.4. 索引里有什么
+
+共 **1841 个 chunk**，覆盖 106 个课程文件：
+
+| 模态 | 数量 | 说明 |
+| --- | --- | --- |
+| `slides` | 943 | 34 个课件 PDF，按页切分 |
+| `notebook` | 479 | 24 个代码 notebook |
+| `transcript` | 308 | 12 个课程视频转写，5.7 小时，带 `t:mm:ss` 时间戳 |
+| `mcq` | 47 | 练习题及答案 |
+| `assessment_pdf` | 44 | IRA / TRA 测验 |
+| `misc` | 15 | 大纲、项目说明 |
+| `clarification` | 5 | 讲师课后澄清 |
+
+每个 chunk 都带 `week`（W01–W11）和 `locator`（页码 / cell 号 / 时间戳），
+支持按周次和模态过滤，前端可以直接拿来做引用跳转。
+
+## 3.5. 重建索引（一般不需要）
+
+只有在修改了数据处理逻辑时才需要。需要先拿到原始数据集 `EE6405_Raw_Dataset.zip`（841 MB），
+解压到 `data/raw/`，然后：
+
+~~~bash
+pip install -r requirements-ml.txt    # torch + sentence-transformers
+python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
+~~~
+
+有 GPU 约 1 分钟，纯 CPU 会慢很多。
+
+## 3.6. 已知限制
+
+- **图表、架构图、公式没有进索引。** 目前是纯文本 RAG，PDF 里的图和视频画面都没有提取。
+  学生问"Transformer 架构图长什么样"时只能给出文字描述。
+- **视频只转了音轨**，讲师在屏幕上演示的内容没有捕获。
+- **ASR 有术语误识别**，已针对 8 个高频术语做了修正（ChatGPT、BLEU、RoBERTa 等共 90 处），
+  但不保证覆盖全部。详见 [`docs/RAG_DESIGN.md`](docs/RAG_DESIGN.md)。
+
+# 4. 项目结构🏠
+
+~~~
+EE6405-TABLE8
+├── src/ee6405/
+│   ├── ingest/      数据处理：各模态的加载与分块
+│   ├── rag/         检索：SQLite 索引、向量、三路检索器
+│   ├── agent/       推理链路：LLM 调用、记忆、问答链
+│   ├── kg/          知识图谱抽取（可视化用）
+│   └── eval/        评测：检索指标、MCQ 准确率
+├── scripts/         视频转写、术语后处理、OCR
+├── docs/            设计文档
+├── reports/         评测结果与数据审计
+├── configs/         评测配置
+├── tests/
+└── data/            数据（不入 Git，见 3.1）
+~~~
+
+可以把自己的idea放到"/Ideas/..."目录下

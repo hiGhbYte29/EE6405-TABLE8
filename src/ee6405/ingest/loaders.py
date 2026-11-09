@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Iterable, Iterator
 
+from ee6405.config import REPO_ROOT
 from ee6405.types import Document
 
 SKIP_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "node_modules", ".venv"}
@@ -27,8 +28,21 @@ def _doc_id(path: Path, unit: str = "") -> str:
     return hashlib.sha1(f"{path.resolve()}::{unit}".encode()).hexdigest()[:16]
 
 
+def _repo_path(path: str | Path) -> str:
+    """Represent repository files with portable, workspace-relative paths."""
+    original = Path(path)
+    try:
+        return original.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        portable = str(path).replace("\\", "/")
+        marker = "/data/"
+        if marker in portable:
+            return portable[portable.index(marker) + 1:]
+        return portable
+
+
 def _doc(path: Path, text: str, modality: str, metadata: dict, unit: str = "") -> Document:
-    return Document(_doc_id(path, unit), text.strip(), str(path), modality, metadata)
+    return Document(_doc_id(path, unit), text.strip(), _repo_path(path), modality, metadata)
 
 
 def _pdf_pages(path: Path) -> Iterator[tuple[int, str]]:
@@ -41,7 +55,7 @@ def _pdf_pages(path: Path) -> Iterator[tuple[int, str]]:
 
 def load_slides(path: str | Path) -> list[Document]:
     path = Path(path); week = extract_week(path); title = path.stem
-    return [_doc(path, text, "slides", {"week": week, "source": str(path), "page": page,
+    return [_doc(path, text, "slides", {"week": week, "source": _repo_path(path), "page": page,
         "doc_title": title, "locator": f"page:{page}"}, f"page:{page}") for page, text in _pdf_pages(path)]
 
 
@@ -80,7 +94,7 @@ def parse_clarifications(path: str | Path) -> list[Document]:
         slide_page = rec["slide_page"]
         meta = {"week": week, "related_material": rec["related_material"],
                 "slide_page": slide_page, "topic": rec.get("topic"),
-                "document_type": rec["document_type"], "source": str(path),
+                "document_type": rec["document_type"], "source": _repo_path(path),
                 "locator": f"slide:{slide_page or rec.get('topic') or idx + 1}"}
         out.append(_doc(path, str(rec["text"]), "clarification", meta, f"record:{idx}"))
     return out
@@ -98,7 +112,7 @@ def load_notebook(path: str | Path) -> list[Document]:
             code = "".join(cells[i+1].get("source", [])).strip()
             if code: text = f"{src}\n\n```python\n{code}\n```"; end = i + 1
         elif kind == "code": text = f"```python\n{src}\n```"
-        meta = {"week": week, "source": str(path), "cell_idx": i, "variant": variant,
+        meta = {"week": week, "source": _repo_path(path), "cell_idx": i, "variant": variant,
                 "locator": f"cell:{i}"}
         out.append(_doc(path, text, "notebook", meta, f"cell:{i}")); i = end + 1
     return out
@@ -120,19 +134,150 @@ def parse_mcq(path: str | Path, answer_path: str | Path | None = None) -> list[D
         answer = answers.get(qid)
         text = f"{block}\n\nAnswer: {answer}" if answer is not None else block
         out.append(_doc(path, text, "mcq", {"week": week, "part": part, "qid": qid,
-            "answer": answer, "source": str(path), "locator": f"question:{qid}"}, f"q:{qid}"))
+            "answer": answer, "source": _repo_path(path), "locator": f"question:{qid}"}, f"q:{qid}"))
     return out
 
 
 def load_assessment_pdf(path: str | Path) -> list[Document]:
     path = Path(path); week = extract_week(path)
-    return [_doc(path, text, "assessment_pdf", {"week": week, "source": str(path), "page": page,
+    return [_doc(path, text, "assessment_pdf", {"week": week, "source": _repo_path(path), "page": page,
         "locator": f"page:{page}"}, f"page:{page}") for page, text in _pdf_pages(path)]
 
 
 def load_misc(path: str | Path) -> list[Document]:
     path = Path(path)
-    return [_doc(path, text, "misc", {"source": str(path), "page": page, "locator": f"page:{page}"}, f"page:{page}") for page, text in _pdf_pages(path)]
+    return [_doc(path, text, "misc", {"source": _repo_path(path), "page": page, "locator": f"page:{page}"}, f"page:{page}") for page, text in _pdf_pages(path)]
+
+
+def load_coding_quiz_ocr(path: str | Path) -> list[Document]:
+    """Load OCR markdown for a coding quiz as one assessment document per page."""
+    path = Path(path)
+    text = path.read_text(encoding="utf-8", errors="replace")
+    markers = list(re.finditer(r"(?m)^##\s+Page\s+(\d+)\s*$", text, re.I))
+    out: list[Document] = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        page_text = text[marker.end():end].strip()
+        if not page_text:
+            continue
+        page = int(marker.group(1))
+        metadata = {
+            "week": None,
+            "page": page,
+            "source": _repo_path(path),
+            "extraction": "ocr",
+            "locator": f"page:{page}",
+        }
+        out.append(_doc(path, page_text, "assessment_pdf", metadata, f"page:{page}"))
+    return out
+
+
+def load_coding_quiz_ocr_tree(root: str | Path) -> Iterator[Document]:
+    """Yield page documents from all OCR coding quiz markdown files."""
+    root = Path(root)
+    if not root.exists():
+        return
+    for path in sorted(root.glob("*.md")) if root.is_dir() else [root]:
+        yield from load_coding_quiz_ocr(path)
+
+
+def _time_locator(seconds: float) -> str:
+    """Return a stable video locator in ``t:mm:ss`` form."""
+    whole = max(0, int(seconds))
+    return f"t:{whole // 60:02d}:{whole % 60:02d}"
+
+
+def _ends_sentence(text: str) -> bool:
+    """Whether a segment ends at a likely sentence boundary."""
+    return bool(re.search(r"[.!?][\"')\]]*$", text.strip()))
+
+
+def _split_transcript_segment(segment: dict) -> list[dict]:
+    """Split multi-sentence ASR segments without losing approximate timing."""
+    text = str(segment.get("text_corrected", segment.get("text", ""))).strip()
+    parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
+    if len(parts) <= 1:
+        return [segment]
+    start = float(segment.get("start", 0.0)); end = float(segment.get("end", start))
+    total = max(1, len(text))
+    pieces: list[dict] = []
+    offset = 0
+    for part in parts:
+        begin = start + (end - start) * offset / total
+        offset += len(part) + 1
+        finish = start + (end - start) * min(offset, total) / total
+        pieces.append({**segment, "start": begin, "end": finish,
+                       "text": part, "text_corrected": part})
+    return pieces
+
+
+def load_transcript(path: str | Path, chunk_size: int = 800) -> list[Document]:
+    """Load a corrected Whisper JSON as retrieval-sized time windows.
+
+    Segments are accumulated until the window is at least a minute and close
+    to the configured character budget, then flushed at a segment sentence
+    boundary.  A quiet/short section is capped at 90 seconds (also flushed at
+    the next sentence boundary), so each document remains useful for video
+    navigation while avoiding one-document-per-ASR-segment retrieval.
+    """
+    path = Path(path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    week = extract_week(data.get("week") or path.name)
+    lecture = data.get("lecture") or "L01"
+    source_video = _repo_path(data.get("source")) if data.get("source") else _repo_path(path)
+    segments = data.get("segments") or []
+    out: list[Document] = []
+    window: list[dict] = []
+    chars = 0
+
+    def flush() -> None:
+        nonlocal window, chars
+        if not window:
+            return
+        start = float(window[0].get("start", 0.0))
+        end = float(window[-1].get("end", start))
+        text = " ".join(str(s.get("text_corrected", s.get("text", ""))).strip() for s in window).strip()
+        if text:
+            unit = f"window:{len(out)}"
+            metadata = {
+                "week": week,
+                "lecture": lecture,
+                "start": start,
+                "end": end,
+                "source": _repo_path(path),
+                "source_video": source_video,
+                "locator": _time_locator(start),
+            }
+            out.append(_doc(path, text, "transcript", metadata, unit))
+        window = []
+        chars = 0
+
+    for segment in segments:
+        for piece in _split_transcript_segment(segment):
+            corrected = str(piece.get("text_corrected", piece.get("text", ""))).strip()
+            if not corrected:
+                continue
+            window.append(piece)
+            chars += len(corrected) + (1 if len(window) > 1 else 0)
+            elapsed = float(piece.get("end", 0.0)) - float(window[0].get("start", 0.0))
+            # Keep a 60--90 second target where possible.  The sentence check
+            # prevents a sentence from being split merely at a time threshold.
+            ready = elapsed >= 60 and chars >= chunk_size
+            hard_limit = elapsed >= 90
+            if (ready or hard_limit) and _ends_sentence(corrected):
+                flush()
+    flush()
+    return out
+
+
+def load_transcript_tree(root: str | Path, chunk_size: int = 800) -> Iterator[Document]:
+    """Yield corrected transcript windows from a directory of JSON files."""
+    root = Path(root)
+    if not root.exists():
+        return
+    files = sorted(root.glob("*.json")) if root.is_dir() else [root]
+    for path in files:
+        yield from load_transcript(path, chunk_size=chunk_size)
 
 
 def load_tree(root: str | Path, modalities: set[str] | None = None) -> Iterator[Document]:

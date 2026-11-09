@@ -46,3 +46,6 @@ Thumbs.db
 
 # nested dev worktree (local only)
 .worktrees/
+
+# bundle build output
+dist/
