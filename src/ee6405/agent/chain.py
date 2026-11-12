@@ -85,12 +85,14 @@ class StudyAssistant:
         use_rag: bool = True,
         use_memory: bool = True,
         temperature: float = 0.2,
+        week: str | None = None,
+        modality: list[str] | None = None,
     ) -> Answer:
         k = top_k or settings.top_k
 
         hits: list[Hit] = []
         if use_rag and self.retriever is not None:
-            hits = self.retriever.retrieve(question, k)
+            hits = self.retriever.retrieve(question, k, week=week, modality=modality)
 
         facts: list[str] = []
         history: list[Message] = []

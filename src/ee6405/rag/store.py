@@ -23,7 +23,9 @@ _FTS_SPECIALS = str.maketrans({c: " " for c in '"*()[]{}^:-+~'})
 class ChunkStore:
     def __init__(self, path: str | Path, *, read_only: bool = False) -> None:
         self.path=Path(path); self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn=sqlite3.connect(self.path); self.conn.row_factory=sqlite3.Row
+        # check_same_thread=False: Streamlit reruns a session's script on new threads,
+        # and the app caches one store for all of them.
+        self.conn=sqlite3.connect(self.path, check_same_thread=False); self.conn.row_factory=sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys=ON")
         if not read_only:
             self.conn.executescript(_SCHEMA)

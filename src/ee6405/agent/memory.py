@@ -52,7 +52,8 @@ class ConversationMemory:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.session_id = session_id
-        self.conn = sqlite3.connect(self.path)
+        # Streamlit reruns a session's script on new threads.
+        self.conn = sqlite3.connect(self.path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(_SCHEMA)
         self.conn.commit()

@@ -5,6 +5,7 @@
 streamlit>=1.40
 plotly>=5.24
 streamlit-agraph>=0.0.45
+pypdfium2>=4.0      # render the cited slide page in the source panel
 
 # --- LLM access (OpenAI-compatible: OpenAI / DeepSeek / Qwen / vLLM / Ollama) ---
 openai>=1.54
