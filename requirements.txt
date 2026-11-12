@@ -9,6 +9,7 @@ streamlit-agraph>=0.0.45
 # --- LLM access (OpenAI-compatible: OpenAI / DeepSeek / Qwen / vLLM / Ollama) ---
 openai>=1.54
 python-dotenv>=1.0
+pyyaml>=6.0         # configs/eval.yaml
 
 # --- data ---
 numpy>=1.26

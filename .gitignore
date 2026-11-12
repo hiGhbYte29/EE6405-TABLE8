@@ -49,3 +49,6 @@ Thumbs.db
 
 # bundle build output
 dist/
+
+# ---- Local AI assistant notes ----
+CLAUDE.md

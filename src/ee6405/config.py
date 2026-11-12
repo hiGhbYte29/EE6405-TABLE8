@@ -32,6 +32,8 @@ class Settings:
     llm_base_url: str = os.getenv("EE6405_LLM_BASE_URL", "https://api.openai.com/v1")
     llm_api_key: str = os.getenv("EE6405_LLM_API_KEY", "")
     llm_model: str = os.getenv("EE6405_LLM_MODEL", "gpt-4o-mini")
+    # DeepSeek thinking mode: "enabled" | "disabled" | "" (don't send; provider default)
+    llm_thinking: str = os.getenv("EE6405_LLM_THINKING", "")
 
     # --- embeddings ---
     embed_backend: str = os.getenv("EE6405_EMBED_BACKEND", "local")

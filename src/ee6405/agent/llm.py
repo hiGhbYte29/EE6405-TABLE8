@@ -38,6 +38,7 @@ class EchoLLM:
     """
 
     name: str = "echo"
+    base_url: str = "offline"
     calls: list[list[Message]] = field(default_factory=list)
 
     def chat(self, messages: list[Message], temperature: float = 0.2) -> str:
@@ -59,30 +60,50 @@ class LLMClient:
         base_url: str | None = None,
         api_key: str | None = None,
         timeout: float = 60.0,
+        thinking: str | None = None,
     ) -> None:
         from openai import OpenAI
 
         self.name = model or settings.llm_model
+        # DeepSeek's switch: {"thinking": {"type": "enabled"|"disabled"}}. Only sent
+        # when set, because other providers may reject the unknown field.
+        self.thinking = settings.llm_thinking if thinking is None else thinking
+        # Kept on the instance so eval CSVs can record which endpoint answered.
+        self.base_url = base_url or settings.llm_base_url
         self._client = OpenAI(
             api_key=api_key or settings.require_llm_key(),
-            base_url=base_url or settings.llm_base_url,
+            base_url=self.base_url,
             timeout=timeout,
         )
 
     def chat(self, messages: list[Message], temperature: float = 0.2) -> str:
+        extra = {"thinking": {"type": self.thinking}} if self.thinking else None
         resp = self._client.chat.completions.create(
             model=self.name,
             messages=messages,  # type: ignore[arg-type]
-            temperature=temperature,
+            temperature=temperature,  # ignored by DeepSeek while thinking is enabled
+            extra_body=extra,
         )
         return (resp.choices[0].message.content or "").strip()
 
 
-def build_llm(model: str | None = None, allow_offline: bool = True) -> LLM:
-    """Return a real client, or :class:`EchoLLM` when no key is configured."""
-    if not settings.llm_api_key:
+def build_llm(
+    model: str | None = None,
+    allow_offline: bool = True,
+    *,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    thinking: str | None = None,
+) -> LLM:
+    """Return a real client, or :class:`EchoLLM` when no key is configured.
+
+    ``base_url`` / ``api_key`` override the ``EE6405_LLM_*`` settings, which is
+    how one eval run can talk to several providers (see ``configs/eval.yaml``).
+    """
+    key = api_key or settings.llm_api_key
+    if not key:
         if not allow_offline:
-            raise RuntimeError("EE6405_LLM_API_KEY is not set.")
+            raise RuntimeError("No LLM API key is set.")
         log.warning("EE6405_LLM_API_KEY is not set -- using EchoLLM (offline stub).")
         return EchoLLM()
-    return LLMClient(model=model)
+    return LLMClient(model=model, base_url=base_url, api_key=key, thinking=thinking)

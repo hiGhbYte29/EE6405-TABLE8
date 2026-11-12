@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -100,6 +101,40 @@ def load_eval_set(path: str | Path) -> list[EvalExample]:
     return examples
 
 
+class MissingKeyError(RuntimeError):
+    """A provider is configured but its API key env var is empty."""
+
+
+def build_provider_llm(
+    provider: str | None,
+    providers: dict[str, dict[str, Any]],
+    model: str | None = None,
+):
+    """LLM for a named provider from ``configs/eval.yaml``.
+
+    ``provider=None`` keeps the old behaviour (the ``EE6405_LLM_*`` settings).
+    A named provider never falls back to EchoLLM: echoed prompts scored as
+    answers would put fake numbers in the report.
+    """
+    if provider is None:
+        return build_llm(model=model)
+    if provider not in providers:
+        raise SystemExit(f"unknown provider {provider!r}; defined: {sorted(providers)}")
+    p = providers[provider]
+    key_env = p["api_key_env"]
+    key = os.getenv(key_env, "")
+    if not key:
+        raise MissingKeyError(f"provider {provider!r} needs {key_env} in .env")
+    return build_llm(
+        model=model or p.get("model"),
+        base_url=p["base_url"],
+        api_key=key,
+        allow_offline=False,
+        # "" = don't send the field, so providers without a thinking switch are unaffected.
+        thinking=p.get("thinking", ""),
+    )
+
+
 def evaluate_system(
     name: str,
     spec: dict[str, Any],
@@ -107,8 +142,13 @@ def evaluate_system(
     index_path: Path,
     k: int,
     model_override: str | None = None,
+    providers: dict[str, dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Run one system spec over every example and return per-question rows."""
+    # Build the LLM first so a missing key fails before any index work.
+    llm = build_provider_llm(
+        spec.get("provider"), providers or {}, model_override or spec.get("model")
+    )
     store = ChunkStore(index_path)
     retriever = (
         build_retriever(store, spec.get("retriever", settings.retriever))
@@ -123,7 +163,6 @@ def evaluate_system(
     if memory is not None:
         memory.clear()  # every system starts from the same blank slate
 
-    llm = build_llm(model=model_override or spec.get("model"))
     assistant = StudyAssistant(retriever=retriever, llm=llm, memory=memory)
 
     rows: list[dict[str, Any]] = []
@@ -141,6 +180,7 @@ def evaluate_system(
                 "qid": ex.qid,
                 "question": ex.question,
                 "model": answer.model,
+                "base_url": getattr(llm, "base_url", ""),
                 "retriever": spec.get("retriever", "-") if spec.get("use_rag", True) else "-",
                 "use_rag": spec.get("use_rag", True),
                 "use_memory": spec.get("use_memory", True),
@@ -170,19 +210,35 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=REPO_ROOT / "reports" / "eval_results.csv")
     p.add_argument("--only", nargs="*", help="run only these system names")
     p.add_argument("--mcq", action="store_true", help="evaluate indexed MCQs with mcq chunks excluded from retrieval")
-    p.add_argument("--retriever", default="hybrid", choices=["bm25", "dense", "hybrid"])
-    p.add_argument("--model", default=None, help="LLM model id (overrides EE6405_LLM_MODEL)")
+    p.add_argument(
+        "--retriever", nargs="+", default=["hybrid"], choices=["bm25", "dense", "hybrid", "none"],
+        help="MCQ mode: one or more retrievers; 'none' is the no-RAG row",
+    )
+    p.add_argument("--provider", default=None, help="MCQ mode: provider name from the config's `providers:`")
+    p.add_argument("--model", default=None, help="LLM model id (overrides EE6405_LLM_MODEL / the provider default)")
     args = p.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     k = int(cfg.get("top_k", settings.top_k))
     index_path = Path(cfg.get("index_path", settings.index_path))
+    providers = cfg.get("providers") or {}
+    default_out = args.out == REPO_ROOT / "reports" / "eval_results.csv"
     if args.mcq:
-        results = evaluate_mcq(index_path, args.retriever, k, llm=build_llm(model=args.model))
-        mcq_out = args.out if args.out != REPO_ROOT / "reports" / "eval_results.csv" else REPO_ROOT / "reports" / "mcq_eval.csv"
+        try:
+            llm = build_provider_llm(args.provider, providers, args.model)
+        except MissingKeyError as e:
+            raise SystemExit(str(e)) from None
+        results: list[MCQResult] = []
+        for kind in args.retriever:
+            results_one = evaluate_mcq(index_path, "-" if kind == "none" else kind, k, llm=llm)
+            print_mcq_results(results_one)
+            results.extend(results_one)
+        # Per-provider file, so a public-API run never overwrites earlier results.
+        name = f"mcq_eval_{args.provider}.csv" if args.provider else "mcq_eval.csv"
+        mcq_out = REPO_ROOT / "reports" / name if default_out else args.out
         mcq_out.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(mcq_rows(results)).to_csv(mcq_out, index=False)
-        print_mcq_results(results)
+        print(f"\nper-question rows -> {mcq_out}")
         return
     examples = load_eval_set(REPO_ROOT / cfg["eval_set"])
     if not examples:
@@ -193,9 +249,18 @@ def main() -> None:
         systems = {n: s for n, s in systems.items() if n in args.only}
 
     rows: list[dict[str, Any]] = []
+    skipped: list[str] = []
     for name, spec in systems.items():
         print(f"--> {name}")
-        rows.extend(evaluate_system(name, spec or {}, examples, index_path, k, args.model))
+        try:
+            rows.extend(
+                evaluate_system(name, spec or {}, examples, index_path, k, args.model, providers)
+            )
+        except MissingKeyError as e:
+            print(f"    skipped: {e}")
+            skipped.append(name)
+    if not rows:
+        raise SystemExit(f"no system ran (skipped for missing keys: {skipped})")
 
     df = pd.DataFrame(rows)
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -206,6 +271,8 @@ def main() -> None:
     print()
     print(summary.to_string())
     print(f"\nper-question rows -> {args.out}")
+    if skipped:
+        print(f"skipped for missing keys: {', '.join(skipped)}")
 
 
 def _predict_option(text: str) -> str | None:
@@ -235,7 +302,7 @@ def evaluate_mcq(index_path: str | Path, retriever_kind: str = "hybrid", top_k: 
         source_file = str(q.metadata.get("source", q.source))
         source_stem = Path(source_file).stem.replace("_Practice_MCQ", "")
         unique_qid = f"{source_stem}_Q{q.metadata.get('qid', q.chunk_id)}"
-        results.append(MCQResult(unique_qid, source_file, query, str(q.week or q.metadata.get("week", "")), predicted, correct, predicted == correct and correct is not None, [h.chunk.source for h in hits], sum(h.chunk.modality == "mcq" for h in hits), getattr(llm, "name", "unknown"), settings.llm_base_url, f"rag_{retriever_kind}" if retriever else "no_rag"))
+        results.append(MCQResult(unique_qid, source_file, query, str(q.week or q.metadata.get("week", "")), predicted, correct, predicted == correct and correct is not None, [h.chunk.source for h in hits], sum(h.chunk.modality == "mcq" for h in hits), getattr(llm, "name", "unknown"), getattr(llm, "base_url", settings.llm_base_url), f"rag_{retriever_kind}" if retriever else "no_rag"))
     store.close()
     return results
 
