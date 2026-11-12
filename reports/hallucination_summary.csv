@@ -1,0 +1,13 @@
+file,hallucination_segments,runs,longest_run
+W01_L01_Video.json,0,0,0
+W01_L02_Video.json,0,0,0
+W02_Video.json,13,1,13
+W03_Video.json,4,1,4
+W04_L01_Video.json,0,0,0
+W04_L02_Video.json,0,0,0
+W05_L01_Video.json,8,2,4
+W05_L02_Video.json,0,0,0
+W06_L01_Video.json,0,0,0
+W06_L02_Video.json,0,0,0
+W07_L01_Video.json,0,0,0
+W07_L02_Video.json,0,0,0

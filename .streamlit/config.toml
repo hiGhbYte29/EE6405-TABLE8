@@ -1,0 +1,11 @@
+[theme]
+base = "light"
+primaryColor = "#2B59C3"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F6F8"
+textColor = "#1F2328"
+borderColor = "#E1E4E8"
+baseRadius = "8px"
+
+[server]
+headless = true

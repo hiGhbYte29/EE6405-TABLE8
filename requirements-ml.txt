@@ -1,0 +1,8 @@
+# Optional heavy deps: local embeddings + local baseline LLMs.
+# Install only if EE6405_EMBED_BACKEND=local or you run a local-model baseline.
+#   pip install -r requirements-ml.txt
+# CPU-only torch:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.3
+sentence-transformers>=3.0
+transformers>=4.44

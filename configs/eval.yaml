@@ -1,0 +1,84 @@
+# Which systems to compare, and on what.
+#
+# Each entry under `systems` becomes one row of the results table.
+#   use_rag:     False  -> the "without rag" ablation (plain LLM, no retrieval)
+#   use_memory:  False  -> the "without memory" ablation
+#   retriever:   bm25 | dense | hybrid
+#   model:       model id; omit for the provider's default (or EE6405_LLM_MODEL)
+#   provider:    a name under `providers:`; omit to use the EE6405_LLM_* settings
+#
+# Systems whose provider key is missing from .env are skipped, never faked.
+# MCQ accuracy on a provider, all four rows in one run:
+#   python -m ee6405.eval.run_eval --mcq --provider deepseek --retriever none bm25 dense hybrid
+
+top_k: 5
+index_path: data/processed/index.sqlite
+eval_set: data/eval/questions.jsonl
+
+# Public OpenAI-compatible APIs used for the numbers in the final report.
+# Keys stay in .env under the variable named by api_key_env.
+providers:
+  deepseek:
+    # api-docs.deepseek.com: "deepseek-flash" is the current name (DeepSeek-V4.1-Flash);
+    # the legacy "deepseek-v4-flash" is still accepted and routed to the same model.
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    model: deepseek-flash
+    # Thinking is on by default and then ignores temperature. Off keeps runs
+    # comparable with the non-thinking Qwen rows; set "enabled" to compare.
+    thinking: disabled
+  qwen:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key_env: DASHSCOPE_API_KEY
+    model: qwen-plus
+
+systems:
+  # ---- our system ----
+  ours_hybrid:
+    use_rag: true
+    use_memory: true
+    retriever: hybrid
+
+  # ---- retrieval ablation ----
+  ours_bm25:
+    use_rag: true
+    use_memory: true
+    retriever: bm25
+
+  ours_dense:
+    use_rag: true
+    use_memory: true
+    retriever: dense
+
+  # ---- component ablation ----
+  without_rag:
+    use_rag: false
+    use_memory: true
+
+  without_memory:
+    use_rag: true
+    use_memory: false
+    retriever: hybrid
+
+  # ---- public-API comparison: our system vs bare LLM, per provider ----
+  deepseek_hybrid:
+    provider: deepseek
+    use_rag: true
+    use_memory: true
+    retriever: hybrid
+
+  deepseek_llm_only:
+    provider: deepseek
+    use_rag: false
+    use_memory: false
+
+  qwen_hybrid:
+    provider: qwen
+    use_rag: true
+    use_memory: true
+    retriever: hybrid
+
+  qwen_llm_only:
+    provider: qwen
+    use_rag: false
+    use_memory: false

@@ -1,0 +1,128 @@
+[
+  {
+    "term": "ELIZA",
+    "reference_count": 3,
+    "transcript_correct_count": 2,
+    "suspect_count": 3,
+    "status": "present"
+  },
+  {
+    "term": "Weizenbaum",
+    "reference_count": 0,
+    "transcript_correct_count": 0,
+    "suspect_count": 1,
+    "status": "present"
+  },
+  {
+    "term": "DALL-E",
+    "reference_count": 2,
+    "transcript_correct_count": 0,
+    "suspect_count": 3,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "Midjourney",
+    "reference_count": 1,
+    "transcript_correct_count": 0,
+    "suspect_count": 3,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "RMSprop",
+    "reference_count": 58,
+    "transcript_correct_count": 0,
+    "suspect_count": 5,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "Transformer",
+    "reference_count": 299,
+    "transcript_correct_count": 36,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "Attention",
+    "reference_count": 265,
+    "transcript_correct_count": 49,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "ChatGPT",
+    "reference_count": 140,
+    "transcript_correct_count": 8,
+    "suspect_count": 51,
+    "status": "present"
+  },
+  {
+    "term": "Stable Diffusion",
+    "reference_count": 1,
+    "transcript_correct_count": 3,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "GCN",
+    "reference_count": 18,
+    "transcript_correct_count": 0,
+    "suspect_count": 0,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "GAT",
+    "reference_count": 352,
+    "transcript_correct_count": 92,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "BERT",
+    "reference_count": 339,
+    "transcript_correct_count": 38,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "RoBERTa",
+    "reference_count": 49,
+    "transcript_correct_count": 0,
+    "suspect_count": 10,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "TF-IDF",
+    "reference_count": 193,
+    "transcript_correct_count": 48,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "LSTM",
+    "reference_count": 264,
+    "transcript_correct_count": 34,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "GRU",
+    "reference_count": 183,
+    "transcript_correct_count": 17,
+    "suspect_count": 0,
+    "status": "present"
+  },
+  {
+    "term": "CRF",
+    "reference_count": 8,
+    "transcript_correct_count": 0,
+    "suspect_count": 0,
+    "status": "absent_or_low"
+  },
+  {
+    "term": "RAG",
+    "reference_count": 188,
+    "transcript_correct_count": 46,
+    "suspect_count": 0,
+    "status": "present"
+  }
+]

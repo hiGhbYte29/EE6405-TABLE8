@@ -1,0 +1,5 @@
+file,source,week,start,end,count,text
+W02_Video.json,W02/W02_Video.mp4,W02,127.67,133.63,13,NEDs.
+W03_Video.json,W03/W03_Video.mp4,W03,297.78,302.68,4,TF-IDF is a relatively efficient way of using TF-IDF.
+W05_L01_Video.json,W05/W05_L01_Video.mp4,W05,512.34,517.61,4,Long short-term memory is also a problem.
+W05_L01_Video.json,W05/W05_L01_Video.mp4,W05,918.71,923.07,4,"which is a streamlined version of LSTM, with a simpler architecture."

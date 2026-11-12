@@ -1,0 +1,172 @@
+[
+  {
+    "term": "BERT",
+    "correct_count": 37,
+    "suspect_count": 0
+  },
+  {
+    "term": "RoBERTa",
+    "correct_count": 0,
+    "suspect_count": 10
+  },
+  {
+    "term": "ALBERT",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "DistilBERT",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "ELMo",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "FastText",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "GloVe",
+    "correct_count": 8,
+    "suspect_count": 0
+  },
+  {
+    "term": "ChatGPT",
+    "correct_count": 8,
+    "suspect_count": 51
+  },
+  {
+    "term": "ELIZA",
+    "correct_count": 0,
+    "suspect_count": 3
+  },
+  {
+    "term": "Weizenbaum",
+    "correct_count": 0,
+    "suspect_count": 1
+  },
+  {
+    "term": "DALL-E",
+    "correct_count": 0,
+    "suspect_count": 3
+  },
+  {
+    "term": "Midjourney",
+    "correct_count": 0,
+    "suspect_count": 3
+  },
+  {
+    "term": "RMSprop",
+    "correct_count": 0,
+    "suspect_count": 5
+  },
+  {
+    "term": "word2vec",
+    "correct_count": 15,
+    "suspect_count": 0
+  },
+  {
+    "term": "seq2seq",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "LSTM",
+    "correct_count": 34,
+    "suspect_count": 0
+  },
+  {
+    "term": "GRU",
+    "correct_count": 17,
+    "suspect_count": 0
+  },
+  {
+    "term": "CRF",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "GCN",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "GAT",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "TF-IDF",
+    "correct_count": 48,
+    "suspect_count": 0
+  },
+  {
+    "term": "BLEU",
+    "correct_count": 0,
+    "suspect_count": 14
+  },
+  {
+    "term": "ROUGE",
+    "correct_count": 3,
+    "suspect_count": 0
+  },
+  {
+    "term": "METEOR",
+    "correct_count": 6,
+    "suspect_count": 0
+  },
+  {
+    "term": "perplexity",
+    "correct_count": 1,
+    "suspect_count": 0
+  },
+  {
+    "term": "n-gram",
+    "correct_count": 27,
+    "suspect_count": 0
+  },
+  {
+    "term": "softmax",
+    "correct_count": 12,
+    "suspect_count": 0
+  },
+  {
+    "term": "logits",
+    "correct_count": 0,
+    "suspect_count": 0
+  },
+  {
+    "term": "embedding",
+    "correct_count": 57,
+    "suspect_count": 0
+  },
+  {
+    "term": "tokenization",
+    "correct_count": 12,
+    "suspect_count": 0
+  },
+  {
+    "term": "lemmatization",
+    "correct_count": 12,
+    "suspect_count": 0
+  },
+  {
+    "term": "POS",
+    "correct_count": 21,
+    "suspect_count": 0
+  },
+  {
+    "term": "NER",
+    "correct_count": 22,
+    "suspect_count": 0
+  },
+  {
+    "term": "RAG",
+    "correct_count": 0,
+    "suspect_count": 0
+  }
+]

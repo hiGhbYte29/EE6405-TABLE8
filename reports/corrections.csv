@@ -1,0 +1,89 @@
+source,file,week,start,end,term,count,original,corrected
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,882.07,886.44,ELIZA,1,"A notable example is ELISA,","A notable example is ELIZA,"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,886.44,892.04,Weizenbaum,1,a simple chatbot created by Joseph Wiesenbaum in 1966.,a simple chatbot created by Joseph Weizenbaum in 1966.
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,892.04,896.2,ELIZA,1,ELISA simulated conversation by using pattern matching,ELIZA simulated conversation by using pattern matching
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,900.5,903.64,ELIZA,1,"While ELISA wasn't truly understanding language,","While ELIZA wasn't truly understanding language,"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,2431.78,2436.33,DALL-E,1,"Tools like DALI, Stable Diffusion, and Meet Journey","Tools like DALL-E, Stable Diffusion, and Meet Journey"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,2431.78,2436.33,Midjourney,1,"Tools like DALL-E, Stable Diffusion, and Meet Journey","Tools like DALL-E, Stable Diffusion, and Midjourney"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,2440.33,2444.0,DALL-E,1,"DALI, also from OpenAI,","DALL-E, also from OpenAI,"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,2485.87,2489.86,Midjourney,1,"Meet Journey, on the other hand,","Midjourney, on the other hand,"
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,2503.07,2504.07,Midjourney,1,Meet Journey is your go-to tool.,Midjourney is your go-to tool.
+W01/W01_L02_Video.mp4,W01_L02_Video.json,W01,3800.11,3802.11,DALL-E,1,Platforms like DALI,Platforms like DALL-E
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,117.3,121.66,BLEU,1,"Evaluation metrics for these models include BLUE,","Evaluation metrics for these models include BLEU,"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,792.09,798.75,BLEU,1,or BLUE. It is a metric that evaluates the similarity between a human-generated,or BLEU. It is a metric that evaluates the similarity between a human-generated
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,798.75,805.61,BLEU,1,target sentence and a machine-generated predicted sentence. The BLUE score is,target sentence and a machine-generated predicted sentence. The BLEU score is
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,810.57,818.44,BLEU,1,"and the target sentence. The most common n-gram values for the BLUE metric are 1, 2, 3, and 4.","and the target sentence. The most common n-gram values for the BLEU metric are 1, 2, 3, and 4."
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,819.47,825.92,BLEU,1,4 is the default value. Blue is frequently used in machine translation applications.,4 is the default value. BLEU is frequently used in machine translation applications.
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,829.2,834.56,BLEU,1,"In the case of BLUE, precision is defined as the number of correctly predicted","In the case of BLEU, precision is defined as the number of correctly predicted"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1012.05,1019.29,BLEU,1,"blue score, we first compute the geometric average of the n-grams, typically for n from 1 to 4 as","BLEU score, we first compute the geometric average of the n-grams, typically for n from 1 to 4 as"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1026.4,1035.03,BLEU,1,"values. As such, we add a brevity penalty to the blue score to penalize sentences that are too","values. As such, we add a brevity penalty to the BLEU score to penalize sentences that are too"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1041.04,1045.86,BLEU,1,"So now, the blue score is calculated as the product of the brevity penalty and the geometric","So now, the BLEU score is calculated as the product of the brevity penalty and the geometric"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1045.86,1055.9,BLEU,2,"average precision. To implement the blue score, we can use the blue score metric in the NLTK library.","average precision. To implement the BLEU score, we can use the BLEU score metric in the NLTK library."
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1080.76,1089.0,BLEU,1,"force to the process of capturing the answers or the main point of a piece of text. Similar to blue,","force to the process of capturing the answers or the main point of a piece of text. Similar to BLEU,"
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,1275.67,1281.54,BLEU,1,It complements other popular metrics like BLUE and ROUGE.,It complements other popular metrics like BLEU and ROUGE.
+W04/W04_L02_Video.mp4,W04_L02_Video.json,W04,2135.55,2136.55,BLEU,1,Blue.,BLEU.
+W05/W05_L02_Video.mp4,W05_L02_Video.json,W05,685.8,691.41,RMSprop,1,"RMS prop, short for Root Mean Square Propagation,","RMSprop, short for Root Mean Square Propagation,"
+W05/W05_L02_Video.mp4,W05_L02_Video.json,W05,702.0,707.5,RMSprop,1,The heart of RMS prop lies in keeping a moving average of squared gradients for each weight.,The heart of RMSprop lies in keeping a moving average of squared gradients for each weight.
+W05/W05_L02_Video.mp4,W05_L02_Video.json,W05,714.99,723.31,RMSprop,1,RMS prop specializes in dealing with parameters that cause the cost function to oscillate significantly.,RMSprop specializes in dealing with parameters that cause the cost function to oscillate significantly.
+W05/W05_L02_Video.mp4,W05_L02_Video.json,W05,733.86,741.36,RMSprop,1,One notable advantage of RMS prop is its reduced need for manual tuning compared to some other gradient descent variants.,One notable advantage of RMSprop is its reduced need for manual tuning compared to some other gradient descent variants.
+W05/W05_L02_Video.mp4,W05_L02_Video.json,W05,746.86,750.71,RMSprop,1,"While RMS prop elevates the need for extensive tuning,","While RMSprop elevates the need for extensive tuning,"
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,801.2,812.55,RoBERTa,1,Robota is a powerful variant of the BERT,RoBERTa is a powerful variant of the BERT
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,824.55,828.55,RoBERTa,1,Next Sentence Prediction from Robota's pre-training objective.,Next Sentence Prediction from RoBERTa's pre-training objective.
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,835.55,840.55,RoBERTa,1,Robota's modification reflects a strategic shift in training objectives.,RoBERTa's modification reflects a strategic shift in training objectives.
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,844.68,847.68,RoBERTa,1,of token masking during Robota's pre-training.,of token masking during RoBERTa's pre-training.
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,853.68,856.68,RoBERTa,1,Robota introduces a change for each epoch.,RoBERTa introduces a change for each epoch.
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,864.68,872.94,RoBERTa,1,Robota also opts for byte pair encoding tokenization,RoBERTa also opts for byte pair encoding tokenization
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,885.94,888.94,RoBERTa,1,This choice allows Robota to efficiently handle,This choice allows RoBERTa to efficiently handle
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,890.94,895.04,RoBERTa,1,"Moreover, Robota benefits from more extensive training data","Moreover, RoBERTa benefits from more extensive training data"
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,976.76,982.01,RoBERTa,1,"Distilled Robota is similar to the concept of Distilled BERT,","Distilled RoBERTa is similar to the concept of Distilled BERT,"
+W06/W06_L02_Video.mp4,W06_L02_Video.json,W06,982.01,985.01,RoBERTa,1,but with Robota as the teacher model.,but with RoBERTa as the teacher model.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,51.17,60.14,ChatGPT,2,"And, with the popularity of ChatGDP, we'll discuss two ChatGDP-based applications with prompt engineering.","And, with the popularity of ChatGPT, we'll discuss two ChatGPT-based applications with prompt engineering."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,631.96,635.76,ChatGPT,1,"Next, we'll switch gears to discuss applications of ChatGDP.","Next, we'll switch gears to discuss applications of ChatGPT."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,672.89,679.78,ChatGPT,1,"Recently, there have been many use cases of using powers of ChatGDP to support content moderation.","Recently, there have been many use cases of using powers of ChatGPT to support content moderation."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,695.69,698.49,ChatGPT,1,"In step 1, ChatGDP is fed a descriptive document,","In step 1, ChatGPT is fed a descriptive document,"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,702.75,708.55,ChatGPT,1,"In step 2, ChatGDP is asked to perform classification tasks on some inputs","In step 2, ChatGPT is asked to perform classification tasks on some inputs"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,718.55,725.35,ChatGPT,1,"In step 3, ChatGDP is asked to provide detailed step-by-step reasoning for its classification.","In step 3, ChatGPT is asked to provide detailed step-by-step reasoning for its classification."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,730.55,736.35,ChatGPT,1,"In step 4, humans review the results from ChatGDP and make any corrections if necessary.","In step 4, humans review the results from ChatGPT and make any corrections if necessary."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,736.55,744.35,ChatGPT,1,"In step 5, ChatGDP reviews the human results and produces an updated version of the initial descriptive document.","In step 5, ChatGPT reviews the human results and produces an updated version of the initial descriptive document."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,750.35,755.15,ChatGPT,1,ChatGDP should be able to produce better classification results in step 2.,ChatGPT should be able to produce better classification results in step 2.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,758.35,761.15,ChatGPT,1,"The more samples ChatGDP reviews,","The more samples ChatGPT reviews,"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,774.38,777.18,ChatGPT,1,"In step 1, ChatGDP is fed","In step 1, ChatGPT is fed"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,784.42,789.22,ChatGPT,1,"In step 2, we provide many product descriptions to ChatGDP","In step 2, we provide many product descriptions to ChatGPT"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,794.42,799.22,ChatGPT,1,We would like to ask ChatGDP to classify if a product is prohibited,We would like to ask ChatGPT to classify if a product is prohibited
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,803.42,807.22,ChatGPT,1,"In step 3, ChatGDP is asked to provide detailed step-by-step reasoning","In step 3, ChatGPT is asked to provide detailed step-by-step reasoning"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,815.42,817.25,ChatGPT,1,ChatGDP should be able to tell us,ChatGPT should be able to tell us
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,821.45,825.25,ChatGPT,1,"In step 4, human review the results from ChatGDP","In step 4, human review the results from ChatGPT"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,828.45,833.25,ChatGPT,1,Human will also help label the ones that are marked as unclear by ChatGDP.,Human will also help label the ones that are marked as unclear by ChatGPT.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,833.45,837.25,ChatGPT,1,"In step 5, ChatGDP reviews the human results","In step 5, ChatGPT reviews the human results"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,851.25,855.14,ChatGPT,1,that cover the cases where it was previously unclear to ChatGDP.,that cover the cases where it was previously unclear to ChatGPT.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,857.34,860.14,ChatGPT,1,ChatGDP reviews the new SOP,ChatGPT reviews the new SOP
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,865.14,870.94,ChatGPT,1,"That is, ChatGDP should be able to do the correct classification in most cases,","That is, ChatGPT should be able to do the correct classification in most cases,"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,879.75,882.55,ChatGPT,1,by giving ChatGDP well-structured information.,by giving ChatGPT well-structured information.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,895.75,898.55,ChatGPT,1,Note that the key to this prompt is to ask ChatGDP,Note that the key to this prompt is to ask ChatGPT
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,904.75,909.55,ChatGPT,1,This request to ChatGDP allows it to crystallize the key points of the SOP.,This request to ChatGPT allows it to crystallize the key points of the SOP.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,909.75,913.55,ChatGPT,1,This will help ChatGDP with both making the decision,This will help ChatGPT with both making the decision
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,917.82,921.62,ChatGPT,1,"In the next prompt, we'll ask ChatGDP to provide definitive answers","In the next prompt, we'll ask ChatGPT to provide definitive answers"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,923.82,925.62,ChatGPT,1,Note that we give ChatGDP,Note that we give ChatGPT
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,928.82,931.62,ChatGPT,1,This prevents ChatGDP being forced to create answers,This prevents ChatGPT being forced to create answers
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,933.82,938.71,ChatGPT,1,The end result should be that ChatGDP only answers yes or no when it is sure.,The end result should be that ChatGPT only answers yes or no when it is sure.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,944.68,948.48,ChatGPT,1,"Next, we ask ChatGDP to provide step-by-step reasoning.","Next, we ask ChatGPT to provide step-by-step reasoning."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,948.68,953.48,ChatGPT,1,The key here is to ask ChatGDP to reference the SOP definitions for its reasoning.,The key here is to ask ChatGPT to reference the SOP definitions for its reasoning.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,953.68,956.48,ChatGPT,1,"This way, in the case where ChatGDP provides","This way, in the case where ChatGPT provides"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,984.41,988.21,ChatGPT,1,"Finally, we ask ChatGDP to update the SOP after human review.","Finally, we ask ChatGPT to update the SOP after human review."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,988.41,992.21,ChatGPT,1,The keys here are ask ChatGDP to update the definition,The keys here are ask ChatGPT to update the definition
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1106.7,1110.5,ChatGPT,1,"Before ChatGDP, chatbots only used fixed sets of responses.","Before ChatGPT, chatbots only used fixed sets of responses."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1119.7,1123.5,ChatGPT,1,"With ChatGDP, chatbots can obviously be made more intelligent.","With ChatGPT, chatbots can obviously be made more intelligent."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1123.7,1128.5,ChatGPT,1,One area that has been actively explored is to have ChatGDP guide users,One area that has been actively explored is to have ChatGPT guide users
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1139.5,1144.3,ChatGPT,1,Our example here is to demonstrate the power of ChatGDP's API and prompt engineering,Our example here is to demonstrate the power of ChatGPT's API and prompt engineering
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1157.56,1163.36,ChatGPT,1,where user inputs are put into engineered prompts for ChatGDP's consumption.,where user inputs are put into engineered prompts for ChatGPT's consumption.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1175.56,1182.36,ChatGPT,1,and goes through the ChatGDP system before being presented to the user in a more natural form.,and goes through the ChatGPT system before being presented to the user in a more natural form.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1232.52,1238.32,ChatGPT,1,"On the user side, customers interact the chatbot powered by ChatGDP.","On the user side, customers interact the chatbot powered by ChatGPT."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1330.14,1332.94,ChatGPT,1,the result is presented to the user via ChatGDP.,the result is presented to the user via ChatGPT.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1353.04,1357.84,ChatGPT,1,ChatGDP can converse with the user further to better understand the customer's need.,ChatGPT can converse with the user further to better understand the customer's need.
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1412.96,1421.99,ChatGPT,1,"For ChatGDP-based applications, we discussed Content Moderation","For ChatGPT-based applications, we discussed Content Moderation"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1426.12,1432.14,ChatGPT,1,"For these applications, we mainly leveraged ChatGDP's inherent ability","For these applications, we mainly leveraged ChatGPT's inherent ability"
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1435.34,1439.14,ChatGPT,1,"In addition, ChatGDP is also used to create logical and consistent procedures.","In addition, ChatGPT is also used to create logical and consistent procedures."
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1439.34,1445.17,ChatGPT,1,Prompt engineering is frequently used to guide ChatGDP,Prompt engineering is frequently used to guide ChatGPT
+W07/W07_L01_Video.mp4,W07_L01_Video.json,W07,1456.06,1461.86,ChatGPT,1,a large variety of customizations in ChatGDP-based products and services.,a large variety of customizations in ChatGPT-based products and services.
+W07/W07_L02_Video.mp4,W07_L02_Video.json,W07,1217.66,1220.66,ChatGPT,1,since the inception of ChatGDP for content marketing.,since the inception of ChatGPT for content marketing.
+W07/W07_L02_Video.mp4,W07_L02_Video.json,W07,1539.66,1546.94,ChatGPT,1,"Looking into the future, the advent of technologies like ChatGDP","Looking into the future, the advent of technologies like ChatGPT"

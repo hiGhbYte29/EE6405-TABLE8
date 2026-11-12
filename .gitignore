@@ -1,0 +1,54 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# ---- Tooling caches ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ---- Secrets / local config ----
+.env
+.env.local
+*.key
+
+# ---- Data (keep the folder shape, not the bytes) ----
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# ---- Build artefacts of the index / caches ----
+*.sqlite
+*.sqlite3
+*.db
+*.faiss
+*.npy
+*.npz
+.cache/
+models/
+
+# ---- Reports ----
+reports/figures/*
+!reports/figures/.gitkeep
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# nested dev worktree (local only)
+.worktrees/
+
+# bundle build output
+dist/
+
+# ---- Local AI assistant notes ----
+CLAUDE.md

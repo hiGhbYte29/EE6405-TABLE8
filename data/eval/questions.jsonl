@@ -1,0 +1,7 @@
+// One JSON object per line. Lines starting with // and blank lines are ignored.
+// relevant_sources must match the `source` path stored in the index (see
+// `SELECT DISTINCT source FROM chunks` in data/processed/index.sqlite).
+// TODO(team): grow this to >= 50 questions spread across the data sources
+// (slides / code / transcript / doc / quiz) before running the final numbers.
+{"qid": "demo1", "question": "What is retrieval augmented generation?", "relevant_sources": ["data/raw/slides/week7.pdf"], "reference_answer": ""}
+{"qid": "demo2", "question": "How does a graph attention network differ from a GCN?", "relevant_sources": ["data/raw/slides/week5.pdf"], "reference_answer": ""}
