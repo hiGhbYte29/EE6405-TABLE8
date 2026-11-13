@@ -15,15 +15,18 @@ import time
 import uuid
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from ee6405.agent.chain import StudyAssistant
 from ee6405.agent.llm import EchoLLM, build_llm
 from ee6405.agent.memory import ConversationMemory
 from ee6405.app import sources as src
 from ee6405.config import settings
+from ee6405.kg.extract import extract_triples_cooccurrence, extract_triples_llm
+from ee6405.kg.graph import build_graph, to_pyvis_html, top_nodes
 from ee6405.rag.retriever import build_retriever
 from ee6405.rag.store import ChunkStore
-from ee6405.types import Hit
+from ee6405.types import Hit, Chunk
 
 st.set_page_config(page_title="EE6405 学习助手", page_icon=":material/menu_book:", layout="wide")
 
@@ -91,6 +94,56 @@ def weeks() -> list[str]:
 
 
 @st.cache_data
+def load_all_chunks(week: str | None = None) -> list[Chunk]:
+    chunks = get_store().all_chunks()
+    if week is not None:
+        chunks = [c for c in chunks if c.week == week]
+    return chunks
+
+
+@st.cache_resource(show_spinner=False)
+def build_global_graph_html(
+    week: str | None = None,
+) -> tuple[str, list[tuple[str, float]], int, int]:
+    """全课程简单图谱：基于统计共现，缓存后秒加载。"""
+    chunks = load_all_chunks(week)
+    triples = extract_triples_cooccurrence(chunks, top_terms=20, min_count=2)
+    g = build_graph(triples)
+    html_str = to_pyvis_html(g, height="550px")
+    return html_str, top_nodes(g, n=8), g.number_of_nodes(), g.number_of_edges()
+
+
+@st.cache_data(show_spinner=False)
+def build_local_graph_html(
+    chunk_ids: tuple[str, ...],
+    _chunks: list[Chunk],
+    method: str,
+    llm_name: str,
+    is_echo: bool,
+    _llm,
+) -> tuple[str, list[tuple[str, float]], int, int, str]:
+    """针对当前提问召回的 Top-K chunks 构建动态局部子图（带缓存，切换面板不重复调 LLM）。"""
+    note = ""
+    if method == "llm":
+        if is_echo:
+            note = "未配置 API Key（离线模式），已自动回退为统计共现。"
+            triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
+        else:
+            triples = extract_triples_llm(_chunks, llm=_llm)
+            if not triples:
+                note = "LLM 未抽出有效三元组，已回退为统计共现。"
+                triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
+    else:
+        triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=2)
+        if len(triples) < 3:
+            # 局部片段较少时放宽共现门槛，防止子图为空
+            triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
+
+    g = build_graph(triples)
+    html_str = to_pyvis_html(g, height="550px")
+    return html_str, top_nodes(g, n=8), g.number_of_nodes(), g.number_of_edges(), note
+
+@st.cache_data
 def page_png(path: str, page: int) -> bytes | None:
     from pathlib import Path
 
@@ -120,6 +173,10 @@ def init_state() -> None:
     ss.setdefault("messages", [])
     ss.setdefault("active", None)  # (message index, hit index)
     ss.setdefault("pdf_page", 1)
+    ss.setdefault("kg_query", "")
+    ss.setdefault("kg_chunks", [])
+    ss.setdefault("kg_top_k_used", None)
+    ss.setdefault("kg_view", "auto")  # "auto" | "global" | "local"
     if "memory" not in ss:
         ss.memory = ConversationMemory(settings.memory_path, session_id=ss.sid)
 
@@ -129,6 +186,10 @@ def new_chat() -> None:
     ss.memory.clear()
     ss.messages = []
     ss.active = None
+    ss.kg_query = ""
+    ss.kg_chunks = []
+    ss.kg_top_k_used = None
+    ss.kg_view = "auto"
 
 
 def open_cite(i: int, j: int) -> None:
@@ -185,6 +246,20 @@ def sidebar() -> dict:
             default=list(MODALITY_GROUPS),
         )
 
+        st.markdown("##### 知识图谱")
+        kg_method = st.segmented_control(
+            "三元组抽取",
+            ["cooccurrence", "llm"],
+            format_func=lambda x: "统计共现" if x == "cooccurrence" else "LLM 抽取",
+            default="cooccurrence",
+            required=True,
+            width="stretch",
+        )
+        kg_top_k = st.slider(
+            "局部图谱召回 Top-K", min_value=3, max_value=15, value=6,
+            help="向 RAG 检索最相关的 K 个片段用于构建当前问题的动态子图",
+        )
+        
         st.markdown("##### 模型")
         thinking = st.toggle(
             "思考模式", value=settings.llm_thinking == "enabled", help="更慢，推理更充分"
@@ -206,6 +281,8 @@ def sidebar() -> dict:
         "week": None if week == "全部周次" else week,
         "modality": modality,
         "llm": llm,
+        "kg_method": kg_method,
+        "kg_top_k": kg_top_k,
     }
 
 
@@ -252,8 +329,18 @@ def answer(question: str, opts: dict) -> dict:
     except Exception as e:  # network, auth, rate limit ...
         return {"role": "assistant", "error": True, "hits": [],
                 "content": f"请求失败（{type(e).__name__}），请稍后重试。"}
+
+    kg_k = opts["kg_top_k"]
+    if ans.hits and kg_k <= len(ans.hits):
+        kg_chunks = [h.chunk for h in ans.hits[:kg_k]]
+    else:
+        kg_hits = retriever.retrieve(
+            question, top_k=kg_k, week=opts["week"], modality=opts["modality"]
+        )
+        kg_chunks = [h.chunk for h in kg_hits]
+        
     meta = f"{ans.model} · {RETRIEVERS[opts['retriever']]} · {time.time() - t0:.1f} 秒"
-    return {"role": "assistant", "content": ans.text, "hits": ans.hits, "meta": meta}
+    return {"role": "assistant", "content": ans.text, "hits": ans.hits, "meta": meta, "kg_chunks": kg_chunks}
 
 
 # --------------------------------------------------------------------- panel
@@ -356,6 +443,86 @@ def render_panel(hit: Hit) -> None:
         with st.container(border=True):
             st.markdown(c.text)
 
+def render_kg_panel(opts: dict) -> None:
+    ss = st.session_state
+    if not ss.kg_query and ss.messages:
+        last_u = next((m["content"] for m in reversed(ss.messages) if m["role"] == "user"), "")
+        last_a = next(
+            (m for m in reversed(ss.messages) if m["role"] == "assistant" and not m.get("error")),
+            None,
+        )
+        if last_u and last_a:
+            ss.kg_query = last_u
+            ss.kg_chunks = last_a.get("kg_chunks") or [h.chunk for h in last_a.get("hits", [])]
+            ss.kg_top_k_used = None
+	
+    has_local = bool(ss.kg_query)
+    mode = "local" if (has_local and ss.kg_view != "global") else "global"
+
+    # 若用户在提问后拖动了侧边栏 Top-K 滑块/检索方式/周次，实时按新条件重召回子图
+    cur_params = (opts["kg_top_k"], opts["retriever"], opts["week"], tuple(opts["modality"] or ()))
+    if mode == "local" and ss.kg_top_k_used != cur_params:
+        retriever = get_retriever(opts["retriever"])
+        kg_hits = retriever.retrieve(
+            ss.kg_query, top_k=opts["kg_top_k"], week=opts["week"], modality=opts["modality"]
+        )
+        ss.kg_chunks = [h.chunk for h in kg_hits]
+        ss.kg_top_k_used = cur_params
+
+    head_col, toggle_col = st.columns([3, 2], vertical_alignment="center")
+    with head_col:
+        if mode == "local":
+            st.markdown("##### 动态局部知识图谱")
+            q_preview = ss.kg_query[:26] + ("…" if len(ss.kg_query) > 26 else "")
+            st.caption(f"问题：「{q_preview}」· {len(ss.kg_chunks)} 个相关片段")
+        else:
+            st.markdown("##### 全课程知识图谱")
+            st.caption(f"范围：{opts['week'] or '全部周次'} · 统计共现全局概览")
+
+    with toggle_col:
+        if has_local:
+            if mode == "local":
+                if st.button("查看全课程图谱", width="stretch"):
+                    ss.kg_view = "global"
+                    st.rerun()
+            else:
+                if st.button("回到当前问答子图", type="primary", width="stretch"):
+                    ss.kg_view = "local"
+                    st.rerun()
+
+    if mode == "global":
+        with st.spinner("正在构建全课程图谱…"):
+            html_str, top_concepts, n_nodes, n_edges = build_global_graph_html(opts["week"])
+        note = ""
+    else:
+        if not ss.kg_chunks:
+            st.warning("当前问题未召回到相关课程片段，无法构建局部子图。")
+            return
+        llm = opts["llm"]
+        chunk_ids = tuple(c.chunk_id for c in ss.kg_chunks)
+        with st.spinner("正在提取三元组并构建局部子图…"):
+            html_str, top_concepts, n_nodes, n_edges, note = build_local_graph_html(
+                chunk_ids=chunk_ids,
+                _chunks=ss.kg_chunks,
+                method=opts["kg_method"],
+                llm_name=getattr(llm, "name", "unknown"),
+                is_echo=isinstance(llm, EchoLLM),
+                _llm=llm,
+            )
+
+    if note:
+        st.info(note, icon=":material/info:")
+
+    if n_nodes == 0:
+        st.warning("未能从当前片段提取出实体关系，可以尝试调大 Top-K 或更换问题。")
+        return
+
+    st.caption(f"节点：{n_nodes} · 关系边：{n_edges}　|　鼠标悬停节点/连线可查看详情与出处")
+    components.html(html_str, height=570, scrolling=False)
+
+    if top_concepts:
+        with st.expander("核心概念排行 (Degree Centrality)"):
+            st.markdown(" · ".join(f"`{name}`" for name, _ in top_concepts))
 
 # ---------------------------------------------------------------------- page
 
@@ -367,10 +534,7 @@ def main() -> None:
     ss = st.session_state
 
     hit = active_hit()
-    if hit is not None:
-        chat_col, panel_col = st.columns([3, 2], gap="large")
-    else:
-        chat_col, panel_col = st.container(), None
+    chat_col, panel_col = st.columns([3, 2], gap="large")
 
     with chat_col:
         first = next((m["content"] for m in ss.messages if m["role"] == "user"), None)
@@ -384,7 +548,7 @@ def main() -> None:
                 st.button(q, on_click=ask, args=(q,), type="tertiary")
 
     placeholder = "问点 EE6405 的问题，中英文都可以…"
-    prompt = chat_col.chat_input(placeholder) if panel_col else st.chat_input(placeholder)
+    prompt = chat_col.chat_input(placeholder)
     prompt = prompt or ss.pop("pending", None)
 
     if prompt:
@@ -394,11 +558,21 @@ def main() -> None:
                 with st.spinner("正在检索课程资料并生成回答…"):
                     reply = answer(prompt, opts)
         ss.messages += [{"role": "user", "content": prompt}, reply]
+        if not reply.get("error"):
+            ss.kg_query = prompt
+            ss.kg_chunks = reply.get("kg_chunks", [])
+            ss.kg_top_k_used = (
+                opts["kg_top_k"], opts["retriever"], opts["week"], tuple(opts["modality"] or ())
+            )
+            ss.kg_view = "auto"
+            ss.active = None  # 新提问后自动切回动态子图
         st.rerun()
 
-    if panel_col is not None and hit is not None:
-        with panel_col:
+    with panel_col:
+        if hit is not None:
             render_panel(hit)
+        else:
+            render_kg_panel(opts)
 
 
 main()

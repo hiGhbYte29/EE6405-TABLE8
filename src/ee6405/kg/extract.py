@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import json
 import re
-from collections import Counter
-from dataclasses import dataclass
+from collections import Counter, defaultdict
+from dataclasses import dataclass, field
 from itertools import combinations
+from pathlib import Path
 
 from ee6405.agent.llm import LLM, build_llm
 from ee6405.types import Chunk
@@ -45,7 +46,37 @@ class Triple:
     relation: str
     tail: str
     weight: float = 1.0
-    source: str = ""
+    source: tuple[str, ...] = field(default_factory=tuple)
+
+
+def _format_chunk_source(chunk: Chunk) -> str:
+    meta = getattr(chunk, "metadata", {})
+    if isinstance(meta, str):
+        try:
+            meta = json.loads(meta)
+        except Exception:
+            meta = {}
+
+    doc_title = meta.get("doc_title") or getattr(chunk, "doc_title", None)
+    if not doc_title:
+        src_path = meta.get("source") or getattr(chunk, "source", None)
+        if src_path:
+            doc_title = Path(src_path).stem
+        else:
+            week = meta.get("week") or getattr(chunk, "week", "")
+            doc_title = f"{week}_Material" if week else "CourseDoc"
+	
+    locator = meta.get("locator") or getattr(chunk, "locator", None)
+    page = meta.get("page") or getattr(chunk, "page", None)
+
+    if locator:
+        loc_str = str(locator)
+    elif page is not None:
+        loc_str = f"page:{page}"
+    else:
+        loc_str = "N/A"
+
+    return f"{doc_title} [{loc_str}]"
 
 
 def _terms(text: str, min_len: int = 4) -> list[str]:
@@ -69,21 +100,27 @@ def extract_triples_cooccurrence(
     Relation is always ``co_occurs_with``; ``weight`` is the co-occurrence count.
     """
     freq = Counter()
-    per_chunk: list[set[str]] = []
+    per_chunk: list[tuple[set[str], str]] = []
     for chunk in chunks:
         terms = set(_terms(chunk.text))
-        per_chunk.append(terms)
+        src_tag = _format_chunk_source(chunk)
+        per_chunk.append((terms, src_tag))
         freq.update(terms)
 
     keep = {term for term, n in freq.most_common(top_terms) if n >= min_count}
-    pairs = Counter()
-    for terms in per_chunk:
+    
+    pairs_count = Counter()
+    pairs_source = defaultdict(set)
+    for terms, src_tag in per_chunk:
         for a, b in combinations(sorted(terms & keep), 2):
-            pairs[(a, b)] += 1
+            pair = (a, b)
+            pairs_count[pair] += 1
+            if src_tag:
+                pairs_source[pair].add(src_tag)
 
     return [
-        Triple(head=a, relation="co_occurs_with", tail=b, weight=float(n))
-        for (a, b), n in pairs.items()
+        Triple(head=a, relation="co_occurs_with", tail=b, weight=float(n), source=tuple(sorted(pairs_source[(a, b)])),)
+        for (a, b), n in pairs_count.items()
         if n >= min_count
     ]
 
@@ -110,6 +147,7 @@ def extract_triples_llm(chunks: list[Chunk], llm: LLM | None = None) -> list[Tri
     llm = llm or build_llm()
     triples: list[Triple] = []
     for chunk in chunks:
+        src_tag = _format_chunk_source(chunk)
         raw = llm.chat([{"role": "user", "content": _LLM_PROMPT + chunk.text}])
         match = re.search(r"\[.*\]", raw, re.DOTALL)
         if not match:
@@ -125,7 +163,7 @@ def extract_triples_llm(chunks: list[Chunk], llm: LLM | None = None) -> list[Tri
                         head=str(item["head"]).strip().lower(),
                         relation=str(item["relation"]).strip().lower(),
                         tail=str(item["tail"]).strip().lower(),
-                        source=chunk.source,
+                        source=(src_tag,) if src_tag else (),
                     )
                 )
     return triples
