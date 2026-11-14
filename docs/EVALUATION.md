@@ -79,7 +79,7 @@ Mean over 8 models, no retrieval → hybrid:
 | Practice MCQ | 86.2 | 91.0 | +4.8 |
 | Coding quiz | 97.9 | 98.6 | +0.7 |
 | Theory quiz | 87.5 | 90.8 | +3.3 |
-| Course-specific facts | 80.0 | 98.5 | +18.5 |
+| Course-specific facts | 80.0 | 98.5 | +18.4 |
 
 Reading code needs no course material, so coding quizzes are at ceiling either way.
 Course-specific facts are where retrieval is decisive. 102 of the 152 questions are

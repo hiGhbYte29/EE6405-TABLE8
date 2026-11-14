@@ -255,6 +255,8 @@ python -m streamlit run src/ee6405/app/main.py      # 或 make app
 
 语义 / 混合检索要先装 `requirements-ml.txt`，否则页面会自动退回 BM25。
 
+界面默认中文；在 `.env` 里设 `EE6405_UI_LANG=en` 可切换为英文界面。知识地图右上角的“放大”按钮会把地图展开到大半个页面。
+
 ## 3.6. 评测：RAG 到底带来了什么
 
 4 个测试集（练习题、Coding Quiz、理论测验、课程专属事实题，共 152 题）× 8 个模型 × 3 种检索器。

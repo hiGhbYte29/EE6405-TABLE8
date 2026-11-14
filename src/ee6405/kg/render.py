@@ -15,17 +15,18 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from ee6405.i18n import tr
 from ee6405.kg.course_map import CourseMap
 
 # group -> (colour on the dark canvas, legend label)
 GROUPS: dict[str, tuple[str, str]] = {
-    "concept": ("#D7D5CF", "概念"),
-    "slides": ("#5B9CF5", "课件"),
-    "video": ("#F0A04B", "视频转写"),
-    "code": ("#57C785", "代码"),
-    "quiz": ("#E879A6", "测验"),
-    "other": ("#8A8F98", "其他"),
-    "query": ("#A882FF", "当前问题"),
+    "concept": ("#D7D5CF", tr("概念", "Concept")),
+    "slides": ("#5B9CF5", tr("课件", "Slides")),
+    "video": ("#F0A04B", tr("视频转写", "Lecture video")),
+    "code": ("#57C785", tr("代码", "Code")),
+    "quiz": ("#E879A6", tr("测验", "Quiz")),
+    "other": ("#8A8F98", tr("其他", "Other")),
+    "query": ("#A882FF", tr("当前问题", "Your question")),
 }
 
 
@@ -58,6 +59,11 @@ def _payload(course_map: CourseMap) -> dict:
         "nodes": nodes,
         "edges": edges,
         "groups": {g: {"color": c, "label": lab} for g, (c, lab) in GROUPS.items()},
+        "t": {
+            "linked": tr("相连的 {n} 个节点", "{n} linked nodes"),
+            "more": tr("… 还有 {n} 个", "… {n} more"),
+            "cited": tr("被引用", "Cited"),
+        },
     }
 
 
@@ -68,6 +74,8 @@ def to_obsidian_html(course_map: CourseMap, height: int = 560) -> str:
     return (
         _TEMPLATE.replace("__HEIGHT__", str(int(height)))
         .replace("__DATA__", data)
+        .replace("__T_SEARCH__", tr("搜索节点…", "Search…"))
+        .replace("__T_HINT__", tr("拖拽 · 滚轮缩放 · 点击节点", "Drag · scroll to zoom · click a node"))
         .replace("__VIS_JS__", _vis_js())
     )
 
@@ -104,16 +112,17 @@ _TEMPLATE = r"""<!doctype html>
   #card li:hover { color:#fff; }
   #card li i { flex:0 0 6px; height:6px; border-radius:50%; transform:translateY(-1px); }
   #hint { position:absolute; right:12px; bottom:10px; font-size:11px; color:#5E5E68; pointer-events:none; }
-  @media (max-width: 420px) { #hint { display:none; } #search { width:130px; } #card { width:calc(100% - 24px); top:46px; } }
+  @media (max-width: 620px) { #hint { display:none; } }
+  @media (max-width: 420px) { #search { width:130px; } #card { width:calc(100% - 24px); top:46px; } }
 </style>
 </head>
 <body>
 <div id="wrap">
   <div id="net"></div>
-  <input id="search" type="text" placeholder="搜索节点…" autocomplete="off" spellcheck="false">
+  <input id="search" type="text" placeholder="__T_SEARCH__" autocomplete="off" spellcheck="false">
   <div id="card"></div>
   <div id="legend"></div>
-  <div id="hint">拖拽 · 滚轮缩放 · 点击节点</div>
+  <div id="hint">__T_HINT__</div>
 </div>
 <script>__VIS_JS__</script>
 <script>
@@ -176,6 +185,8 @@ _TEMPLATE = r"""<!doctype html>
     layout: { improvedLayout: false, randomSeed: 7 },
     nodes: { chosen: false }, edges: { chosen: false }
   });
+
+  window.__net = net;  // handle for scripted demos and tests
 
   // --- zoom-dependent labels ------------------------------------------------
   var labelsOn = null;
@@ -249,12 +260,12 @@ _TEMPLATE = r"""<!doctype html>
                (n.week ? " · " + esc(n.week) : "") + '</div><h4>' + esc(n.label) + '</h4>';
     if (n.detail) html += '<div class="detail">' + esc(n.detail) + '</div>';
     if (nb.length) {
-      html += '<div class="sec">相连的 ' + nb.length + ' 个节点</div><ul>';
+      html += '<div class="sec">' + DATA.t.linked.replace('{n}', nb.length) + '</div><ul>';
       nb.slice(0, 14).forEach(function (x) {
         html += '<li data-id="' + esc(x.n.id) + '">' + dot(x.n.group) + '<span>' + esc(x.n.label) +
                 (x.e.label ? ' <span style="color:#8B8B95">· ' + esc(x.e.label) + '</span>' : '') + '</span></li>';
       });
-      if (nb.length > 14) html += '<li style="cursor:default;color:#8B8B95">… 还有 ' + (nb.length - 14) + ' 个</li>';
+      if (nb.length > 14) html += '<li style="cursor:default;color:#8B8B95">' + DATA.t.more.replace('{n}', nb.length - 14) + '</li>';
       html += '</ul>';
     }
     card.innerHTML = html; card.style.display = "block"; card.scrollTop = 0;
@@ -263,8 +274,17 @@ _TEMPLATE = r"""<!doctype html>
     var li = ev.target.closest("li[data-id]");
     if (!li) return;
     var id = li.getAttribute("data-id");
-    pin(id); net.focus(id, { scale: Math.max(net.getScale(), 1.1), animation: { duration: 450 } });
+    pin(id); focusOn(id, Math.max(net.getScale(), 1.1));
   });
+
+  // Centre a node in the space the info card leaves free, and zoom less in a narrow panel.
+  function focusOn(id, scale) {
+    var w = document.getElementById("wrap").clientWidth;
+    var narrow = w < 760;
+    net.focus(id, { scale: narrow ? Math.min(scale, 0.85) : scale,
+                    offset: { x: narrow ? 120 : 0, y: narrow ? 40 : 0 },
+                    animation: { duration: 600, easingFunction: "easeInOutQuad" } });
+  }
 
   // --- search --------------------------------------------------------------
   var search = document.getElementById("search");
@@ -275,7 +295,7 @@ _TEMPLATE = r"""<!doctype html>
     if (!q) { pin(null); return; }
     var found = DATA.nodes.filter(function (n) { return n.label.toLowerCase().indexOf(q) >= 0; });
     found.sort(function (a, b) { return a.label.length - b.label.length; });
-    if (found.length) { pin(found[0].id); net.focus(found[0].id, { scale: 1.3, animation: { duration: 450 } }); }
+    if (found.length) { pin(found[0].id); focusOn(found[0].id, 1.3); }
   });
 
   // --- legend --------------------------------------------------------------
@@ -285,7 +305,7 @@ _TEMPLATE = r"""<!doctype html>
   var lg = Object.keys(G).filter(function (g) { return present[g]; }).map(function (g) {
     return "<span>" + dot(g) + esc(G[g].label) + "</span>";
   });
-  if (ringed) lg.push('<span><i style="background:transparent;border:2px solid #A882FF"></i>被引用</span>');
+  if (ringed) lg.push('<span><i style="background:transparent;border:2px solid #A882FF"></i>' + DATA.t.cited + '</span>');
   document.getElementById("legend").innerHTML = lg.join("");
 })();
 </script>

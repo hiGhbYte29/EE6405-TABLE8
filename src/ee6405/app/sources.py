@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ee6405.config import REPO_ROOT
+from ee6405.i18n import tr
 from ee6405.types import Chunk
 
 RAW_ROOT = REPO_ROOT / "data" / "raw" / "EE6405_Raw_Dataset"
@@ -28,13 +29,13 @@ class Kind:
 
 
 KINDS = {
-    "slides": Kind("课件", "blue"),
-    "transcript": Kind("视频转写", "orange"),
-    "notebook": Kind("代码", "green"),
-    "mcq": Kind("练习题", "violet"),
-    "assessment_pdf": Kind("测验", "violet"),
-    "misc": Kind("课程文件", "gray"),
-    "clarification": Kind("讲师澄清", "gray"),
+    "slides": Kind(tr("课件", "Slides"), "blue"),
+    "transcript": Kind(tr("视频转写", "Lecture video"), "orange"),
+    "notebook": Kind(tr("代码", "Code"), "green"),
+    "mcq": Kind(tr("练习题", "Practice"), "violet"),
+    "assessment_pdf": Kind(tr("测验", "Quiz"), "violet"),
+    "misc": Kind(tr("课程文件", "Course document"), "gray"),
+    "clarification": Kind(tr("讲师澄清", "Clarification"), "gray"),
 }
 
 
@@ -71,7 +72,7 @@ def display_name(chunk: Chunk) -> str:
     if chunk.modality == "transcript":
         lec = str(chunk.metadata.get("lecture") or "")
         lec = f" Lecture {lec.lstrip('L').lstrip('0')}" if lec.startswith("L") else ""
-        return f"{chunk.week or ''}{lec} 视频".strip()
+        return f"{chunk.week or ''}{lec} {tr('视频', 'video')}".strip()
     return Path(chunk.source).name
 
 
@@ -79,7 +80,7 @@ def location_label(chunk: Chunk) -> str:
     loc = chunk.locator or ""
     kind, _, val = loc.partition(":")
     if kind == "page":
-        return f"第 {val} 页"
+        return tr(f"第 {val} 页", f"page {val}")
     if kind == "t":
         return val
     if kind == "cell":
@@ -235,7 +236,7 @@ def notebook_html(path: Path, cell_idx: int) -> str:
         if not text.strip() and not cell.get("outputs"):
             continue
         cited = i in hit
-        tag = "被引用" if cited else ""
+        tag = tr("被引用", "cited") if cited else ""
         anchor = ' id="cited"' if i == first else ""
         if cell.get("cell_type") == "markdown":
             inner = f'<div class="md">{md.render(text)}</div>'

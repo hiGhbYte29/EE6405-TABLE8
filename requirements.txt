@@ -30,3 +30,6 @@ pyvis>=0.3.2
 
 # --- misc ---
 tqdm>=4.66
+
+# --- evaluation figures (python -m ee6405.eval.bench_report) ---
+matplotlib>=3.8

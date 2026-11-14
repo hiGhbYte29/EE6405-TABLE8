@@ -19,6 +19,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ee6405.i18n import tr
 from ee6405.types import Chunk
 
 # (label shown on the map, regex alternatives). Matched case-insensitively with
@@ -237,7 +238,7 @@ def build_course_map(
         if not top:
             continue  # nothing to connect it with
         node = MapNode(id=base.id, label=base.label, group=base.group, week=base.week,
-                       detail=f"{int(base.value)} 个片段")
+                       detail=tr(f"{int(base.value)} 个片段", f"{int(base.value)} chunks"))
         out.nodes.append(node)
         for concept, count in top:
             out.edges.append(MapEdge(node.id, _concept_id(concept), float(count)))
@@ -245,7 +246,7 @@ def build_course_map(
     for concept, n in degree.items():
         out.nodes.append(MapNode(
             id=_concept_id(concept), label=concept, group="concept",
-            value=float(n), detail=f"关联 {n} 份资料",
+            value=float(n), detail=tr(f"关联 {n} 份资料", f"covered by {n} materials"),
         ))
     # Size materials by how many concepts they connect, like Obsidian does.
     links = Counter(e.source for e in out.edges)
@@ -270,7 +271,7 @@ def build_query_map(
     corpus = all_chunks if isinstance(all_chunks, Corpus) else scan_corpus(all_chunks)
     out = CourseMap()
     qid = "query"
-    out.nodes.append(MapNode(id=qid, label="当前问题", group="query", value=6, detail=query))
+    out.nodes.append(MapNode(id=qid, label=tr("当前问题", "Your question"), group="query", value=6, detail=query))
 
     cited: dict[str, MapNode] = {}
     concept_hits: Counter = Counter()
@@ -282,7 +283,7 @@ def build_query_map(
             base = corpus.info[c.source]
             cited[c.source] = MapNode(
                 id=base.id, label=base.label, group=base.group, week=base.week,
-                value=3, detail="被本次回答引用", highlight=True,
+                value=3, detail=tr("被本次回答引用", "cited in this answer"), highlight=True,
             )
             out.edges.append(MapEdge(qid, base.id, 2.0))
         for concept in concepts_in(c.text):
@@ -296,7 +297,7 @@ def build_query_map(
         cid = _concept_id(concept)
         out.nodes.append(MapNode(
             id=cid, label=concept, group="concept", value=1 + concept_hits[concept],
-            detail=f"课程中 {corpus.df[concept]} 份资料涉及",
+            detail=tr(f"课程中 {corpus.df[concept]} 份资料涉及", f"covered by {corpus.df[concept]} materials in the course"),
         ))
         for (source, c2), n in concept_edges.items():
             if c2 == concept:
@@ -312,7 +313,7 @@ def build_query_map(
             if source not in related:
                 related[source] = MapNode(
                     id=base.id, label=base.label, group=base.group, week=base.week,
-                    value=1, detail="相关资料（未被引用）",
+                    value=1, detail=tr("相关资料（未被引用）", "related material (not cited)"),
                 )
             out.edges.append(MapEdge(base.id, cid, float(n)))
     out.nodes.extend(related.values())
@@ -338,7 +339,7 @@ def triples_to_map(triples) -> CourseMap:
     out.edges = list(seen.values())
     out.nodes = [
         MapNode(id=f"concept:{name}", label=name, group="concept", value=float(n),
-                detail=f"{n} 条关系")
+                detail=tr(f"{n} 条关系", f"{n} relations"))
         for name, n in degree.items()
     ]
     return out
