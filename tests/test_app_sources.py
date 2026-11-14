@@ -94,3 +94,18 @@ def test_labels():
     assert src.location_label(c) == "第 9 页" and src.display_name(c) == "W06_Padlet.pdf"
     v = _chunk("transcript", "x.json", "t:13:06", week="W06", lecture="L02")
     assert src.display_name(v) == "W06 Lecture 2 视频" and src.location_label(v) == "13:06"
+
+
+def test_ocr_quiz_citation_opens_the_scanned_pdf(tmp_path, monkeypatch):
+    from ee6405.app import sources
+    from ee6405.types import Chunk
+
+    (tmp_path / "Coding Quiz 4.pdf").write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(sources, "QUIZ_PDF_DIR", tmp_path)
+    ocr = Chunk("c", "d", "text", "data/interim/coding_quiz_ocr/Coding Quiz 4.md",
+                "assessment_pdf", 2, {"extraction": "ocr", "page": 2})
+    assert sources.original_file(ocr) == tmp_path / "Coding Quiz 4.pdf"
+    # no scan on disk -> fall back to whatever the index points at
+    other = Chunk("c", "d", "text", "data/interim/coding_quiz_ocr/Coding Quiz 9.md",
+                  "assessment_pdf", 1, {"extraction": "ocr"})
+    assert sources.original_file(other) is None

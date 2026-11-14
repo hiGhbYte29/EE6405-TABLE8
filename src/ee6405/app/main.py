@@ -22,16 +22,25 @@ from ee6405.agent.llm import EchoLLM, build_llm
 from ee6405.agent.memory import ConversationMemory
 from ee6405.app import sources as src
 from ee6405.config import settings
-from ee6405.kg.extract import extract_triples_cooccurrence, extract_triples_llm
-from ee6405.kg.graph import build_graph, to_pyvis_html, top_nodes
+from ee6405.kg.course_map import (
+    Corpus,
+    CourseMap,
+    build_course_map,
+    build_query_map,
+    scan_corpus,
+    triples_to_map,
+)
+from ee6405.kg.extract import extract_triples_llm
+from ee6405.kg.render import to_obsidian_html
 from ee6405.rag.retriever import build_retriever
 from ee6405.rag.store import ChunkStore
-from ee6405.types import Hit, Chunk
+from ee6405.types import Chunk, Hit
 
 st.set_page_config(page_title="EE6405 学习助手", page_icon=":material/menu_book:", layout="wide")
 
 RETRIEVERS = {"bm25": "BM25", "dense": "语义", "hybrid": "混合"}
 NEEDS_ML = {"dense", "hybrid"}
+KG_HEIGHT = 560  # px, canvas height of the knowledge map
 HAS_ML = importlib.util.find_spec("sentence_transformers") is not None
 MODALITY_GROUPS = {
     "课件": ["slides"],
@@ -63,6 +72,19 @@ CSS = """
 .src-tr.hit { background: #FFF7D6; }
 .src-tr .ts { font-family: ui-monospace, monospace; font-size: 12px; color: #2B59C3; margin-right: 10px; }
 .src-tr.off { color: #59636E; }
+/* headings inside an answer are section labels, not page titles */
+[data-testid="stChatMessageContent"] h1,
+[data-testid="stChatMessageContent"] h2,
+[data-testid="stChatMessageContent"] h3,
+[data-testid="stChatMessageContent"] h4 {
+  font-size: 1.02rem; font-weight: 600; line-height: 1.45; padding: 0.7rem 0 0.2rem; margin: 0;
+}
+[data-testid="stChatMessageContent"] h1 { font-size: 1.12rem; }
+/* no anchor-link icons next to headings */
+[data-testid="stHeaderActionElements"] { display: none; }
+[data-testid="stMainBlockContainer"] { padding: 2.6rem 2.5rem 1rem; max-width: 1600px; }
+/* knowledge-map frame sits flush; the rounded dark canvas is inside it */
+[data-testid="stIFrame"], [data-testid="stCustomComponentV1"] { border: 0; border-radius: 12px; }
 </style>
 """
 
@@ -102,46 +124,41 @@ def load_all_chunks(week: str | None = None) -> list[Chunk]:
 
 
 @st.cache_resource(show_spinner=False)
-def build_global_graph_html(
-    week: str | None = None,
-) -> tuple[str, list[tuple[str, float]], int, int]:
-    """全课程简单图谱：基于统计共现，缓存后秒加载。"""
-    chunks = load_all_chunks(week)
-    triples = extract_triples_cooccurrence(chunks, top_terms=20, min_count=2)
-    g = build_graph(triples)
-    html_str = to_pyvis_html(g, height="550px")
-    return html_str, top_nodes(g, n=8), g.number_of_nodes(), g.number_of_edges()
+def get_corpus() -> Corpus:
+    """Concept counts for every material; scanned once and shared by all maps."""
+    return scan_corpus(load_all_chunks(None))
+
+
+def _map_stats(m: CourseMap) -> tuple[int, int, int]:
+    n_concepts = sum(1 for n in m.nodes if n.group == "concept")
+    n_materials = sum(1 for n in m.nodes if n.group not in {"concept", "query"})
+    return n_materials, n_concepts, len(m.edges)
+
+
+@st.cache_resource(show_spinner=False)
+def course_map_html(week: str | None = None) -> tuple[str, tuple[int, int, int]]:
+    """Whole-course knowledge map: materials linked through the concepts they cover."""
+    m = build_course_map(get_corpus(), week=week)
+    return to_obsidian_html(m, height=KG_HEIGHT), _map_stats(m)
 
 
 @st.cache_data(show_spinner=False)
-def build_local_graph_html(
-    chunk_ids: tuple[str, ...],
-    _chunks: list[Chunk],
-    method: str,
-    llm_name: str,
-    is_echo: bool,
-    _llm,
-) -> tuple[str, list[tuple[str, float]], int, int, str]:
-    """针对当前提问召回的 Top-K chunks 构建动态局部子图（带缓存，切换面板不重复调 LLM）。"""
-    note = ""
-    if method == "llm":
-        if is_echo:
-            note = "未配置 API Key（离线模式），已自动回退为统计共现。"
-            triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
-        else:
-            triples = extract_triples_llm(_chunks, llm=_llm)
-            if not triples:
-                note = "LLM 未抽出有效三元组，已回退为统计共现。"
-                triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
-    else:
-        triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=2)
-        if len(triples) < 3:
-            # 局部片段较少时放宽共现门槛，防止子图为空
-            triples = extract_triples_cooccurrence(_chunks, top_terms=30, min_count=1)
+def query_map_html(
+    query: str, chunk_ids: tuple[str, ...], _chunks: list[Chunk]
+) -> tuple[str, tuple[int, int, int]]:
+    """Map for one question: cited materials, their concepts, and related materials."""
+    m = build_query_map(query, _chunks, get_corpus())
+    return to_obsidian_html(m, height=KG_HEIGHT), _map_stats(m)
 
-    g = build_graph(triples)
-    html_str = to_pyvis_html(g, height="550px")
-    return html_str, top_nodes(g, n=8), g.number_of_nodes(), g.number_of_edges(), note
+
+@st.cache_data(show_spinner=False)
+def triple_map_html(
+    chunk_ids: tuple[str, ...], _chunks: list[Chunk], llm_name: str, _llm
+) -> tuple[str, tuple[int, int, int]]:
+    """Typed concept relations the LLM extracts from the retrieved chunks (cached per question)."""
+    m = triples_to_map(extract_triples_llm(_chunks, llm=_llm))
+    return to_obsidian_html(m, height=KG_HEIGHT), _map_stats(m)
+
 
 @st.cache_data
 def page_png(path: str, page: int) -> bytes | None:
@@ -246,20 +263,21 @@ def sidebar() -> dict:
             default=list(MODALITY_GROUPS),
         )
 
-        st.markdown("##### 知识图谱")
+        st.markdown("##### 知识地图")
         kg_method = st.segmented_control(
-            "三元组抽取",
-            ["cooccurrence", "llm"],
-            format_func=lambda x: "统计共现" if x == "cooccurrence" else "LLM 抽取",
-            default="cooccurrence",
+            "提问后的视图",
+            ["materials", "llm"],
+            format_func=lambda x: "资料关联" if x == "materials" else "概念关系",
+            default="materials",
             required=True,
             width="stretch",
+            help="资料关联：被引用的资料、涉及的概念和相关资料。概念关系：由 LLM 从检索到的片段里抽取三元组。",
         )
         kg_top_k = st.slider(
-            "局部图谱召回 Top-K", min_value=3, max_value=15, value=6,
-            help="向 RAG 检索最相关的 K 个片段用于构建当前问题的动态子图",
+            "用于构图的片段数", min_value=3, max_value=15, value=6,
+            help="取检索结果里最相关的 K 个片段来画当前问题的地图",
         )
-        
+
         st.markdown("##### 模型")
         thinking = st.toggle(
             "思考模式", value=settings.llm_thinking == "enabled", help="更慢，推理更充分"
@@ -353,7 +371,7 @@ def fallback_text(chunk, note: str) -> None:
 
 
 def panel_pdf(chunk) -> bool:
-    path = src.resolve(chunk.source)
+    path = src.original_file(chunk)
     if path is None or path.suffix.lower() != ".pdf":
         return False
     total = page_count(str(path))
@@ -455,11 +473,11 @@ def render_kg_panel(opts: dict) -> None:
             ss.kg_query = last_u
             ss.kg_chunks = last_a.get("kg_chunks") or [h.chunk for h in last_a.get("hits", [])]
             ss.kg_top_k_used = None
-	
+
     has_local = bool(ss.kg_query)
     mode = "local" if (has_local and ss.kg_view != "global") else "global"
 
-    # 若用户在提问后拖动了侧边栏 Top-K 滑块/检索方式/周次，实时按新条件重召回子图
+    # Sidebar settings changed after the question: re-retrieve so the map follows them.
     cur_params = (opts["kg_top_k"], opts["retriever"], opts["week"], tuple(opts["modality"] or ()))
     if mode == "local" and ss.kg_top_k_used != cur_params:
         retriever = get_retriever(opts["retriever"])
@@ -471,58 +489,58 @@ def render_kg_panel(opts: dict) -> None:
 
     head_col, toggle_col = st.columns([3, 2], vertical_alignment="center")
     with head_col:
-        if mode == "local":
-            st.markdown("##### 动态局部知识图谱")
-            q_preview = ss.kg_query[:26] + ("…" if len(ss.kg_query) > 26 else "")
-            st.caption(f"问题：「{q_preview}」· {len(ss.kg_chunks)} 个相关片段")
-        else:
-            st.markdown("##### 全课程知识图谱")
-            st.caption(f"范围：{opts['week'] or '全部周次'} · 统计共现全局概览")
-
+        st.markdown("##### 课程知识地图" if mode == "global" else "##### 本次问答的知识地图")
     with toggle_col:
-        if has_local:
-            if mode == "local":
-                if st.button("查看全课程图谱", width="stretch"):
-                    ss.kg_view = "global"
-                    st.rerun()
-            else:
-                if st.button("回到当前问答子图", type="primary", width="stretch"):
-                    ss.kg_view = "local"
-                    st.rerun()
+        if has_local and mode == "local":
+            if st.button("全课程地图", icon=":material/hub:", width="stretch"):
+                ss.kg_view = "global"
+                st.rerun()
+        elif has_local:
+            if st.button("回到本次问答", icon=":material/arrow_back:", width="stretch"):
+                ss.kg_view = "local"
+                st.rerun()
 
+    note = ""
     if mode == "global":
-        with st.spinner("正在构建全课程图谱…"):
-            html_str, top_concepts, n_nodes, n_edges = build_global_graph_html(opts["week"])
-        note = ""
+        with st.spinner("正在生成课程知识地图…"):
+            html_str, stats = course_map_html(opts["week"])
+        scope = opts["week"] or "全部周次"
+        what = "资料通过共同涉及的概念相连"
     else:
         if not ss.kg_chunks:
-            st.warning("当前问题未召回到相关课程片段，无法构建局部子图。")
+            st.info("这个问题没有检索到课程片段，暂时画不出地图。", icon=":material/info:")
             return
-        llm = opts["llm"]
         chunk_ids = tuple(c.chunk_id for c in ss.kg_chunks)
-        with st.spinner("正在提取三元组并构建局部子图…"):
-            html_str, top_concepts, n_nodes, n_edges, note = build_local_graph_html(
-                chunk_ids=chunk_ids,
-                _chunks=ss.kg_chunks,
-                method=opts["kg_method"],
-                llm_name=getattr(llm, "name", "unknown"),
-                is_echo=isinstance(llm, EchoLLM),
-                _llm=llm,
-            )
+        llm = opts["llm"]
+        use_llm = opts["kg_method"] == "llm"
+        if use_llm and isinstance(llm, EchoLLM):
+            note = "没有配置 API key，无法抽取概念关系，已改为显示资料关联。"
+            use_llm = False
+        if use_llm:
+            with st.spinner("正在让模型抽取概念关系…"):
+                html_str, stats = triple_map_html(
+                    chunk_ids, ss.kg_chunks, getattr(llm, "name", ""), llm
+                )
+            if stats[1] == 0:
+                note = "模型没有抽出可用的概念关系，已改为显示资料关联。"
+                use_llm = False
+        if not use_llm:
+            html_str, stats = query_map_html(ss.kg_query, chunk_ids, ss.kg_chunks)
+        scope = f"{len(ss.kg_chunks)} 个检索片段"
+        what = "模型抽取的概念关系" if use_llm else "紫色圆环是被引用的资料，外圈是讲到同一概念的其他资料"
 
-    if note:
-        st.info(note, icon=":material/info:")
-
-    if n_nodes == 0:
-        st.warning("未能从当前片段提取出实体关系，可以尝试调大 Top-K 或更换问题。")
+    n_materials, n_concepts, n_edges = stats
+    if n_concepts == 0:
+        st.info("检索到的片段里没有识别出课程概念，可以换个问法或调大片段数。", icon=":material/info:")
         return
+    counts = f"{n_concepts} 个概念 · {n_edges} 条关联"
+    if n_materials:
+        counts = f"{n_materials} 份资料 · {counts}"
+    st.caption(f"{scope} · {counts}　|　{what}")
+    if note:
+        st.caption(f":material/info: {note}")
+    components.html(html_str, height=KG_HEIGHT + 4, scrolling=False)
 
-    st.caption(f"节点：{n_nodes} · 关系边：{n_edges}　|　鼠标悬停节点/连线可查看详情与出处")
-    components.html(html_str, height=570, scrolling=False)
-
-    if top_concepts:
-        with st.expander("核心概念排行 (Degree Centrality)"):
-            st.markdown(" · ".join(f"`{name}`" for name, _ in top_concepts))
 
 # ---------------------------------------------------------------------- page
 
@@ -534,7 +552,7 @@ def main() -> None:
     ss = st.session_state
 
     hit = active_hit()
-    chat_col, panel_col = st.columns([3, 2], gap="large")
+    chat_col, panel_col = st.columns([11, 9], gap="large")
 
     with chat_col:
         first = next((m["content"] for m in ss.messages if m["role"] == "user"), None)

@@ -51,6 +51,22 @@ def resolve(rel: str | None) -> Path | None:
     return p if p.is_file() else None
 
 
+QUIZ_PDF_DIR = RAW_ROOT / "04_Assessments" / "02_Coding Quiz"
+
+
+def original_file(chunk: Chunk) -> Path | None:
+    """The file to open for a citation, else None.
+
+    Coding quizzes are scanned PDFs, so the index holds their OCR text
+    (``coding_quiz_ocr/Coding Quiz 4.md``); the thing to show is the PDF itself.
+    """
+    if chunk.metadata.get("extraction") == "ocr":
+        pdf = QUIZ_PDF_DIR / f"{Path(chunk.source).stem}.pdf"
+        if pdf.is_file():
+            return pdf
+    return resolve(chunk.source)
+
+
 def display_name(chunk: Chunk) -> str:
     if chunk.modality == "transcript":
         lec = str(chunk.metadata.get("lecture") or "")

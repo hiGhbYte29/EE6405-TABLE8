@@ -84,7 +84,6 @@ git push -u origin <你的名字>
 ~~~bash
 git clone https://github.com/hiGhbYte29/EE6405-TABLE8.git
 cd EE6405-TABLE8
-git checkout yuhong          # RAG 相关代码在这个分支
 
 conda create -n ee6405 python=3.11 -y
 conda activate ee6405
@@ -167,7 +166,7 @@ print(ans.citations)      # 引用来源，可以在前端展示
 
 ## 3.4. 索引里有什么
 
-共 **1841 个 chunk**，覆盖 106 个课程文件：
+共 **1863 个 chunk**，覆盖 97 个课程文件：
 
 | 模态 | 数量 | 说明 |
 | --- | --- | --- |
@@ -175,14 +174,36 @@ print(ans.citations)      # 引用来源，可以在前端展示
 | `notebook` | 479 | 24 个代码 notebook |
 | `transcript` | 308 | 12 个课程视频转写，5.7 小时，带 `t:mm:ss` 时间戳 |
 | `mcq` | 47 | 练习题及答案 |
-| `assessment_pdf` | 44 | IRA / TRA 测验 |
+| `assessment_pdf` | 66 | IRA / TRA 测验、Coding Quiz 1–4（扫描件，OCR 后入库） |
 | `misc` | 15 | 大纲、项目说明 |
 | `clarification` | 5 | 讲师课后澄清 |
 
 每个 chunk 都带 `week`（W01–W11）和 `locator`（页码 / cell 号 / 时间戳），
 支持按周次和模态过滤，前端可以直接拿来做引用跳转。
 
-## 3.5. 重建索引（一般不需要）
+> 11 月 9 日的部署包里是 1858 个 chunk，不含 Coding Quiz 4。要补上的话，把
+> `Coding Quiz 4.md` 放进 `data/interim/coding_quiz_ocr/` 后重建索引，或者找组员要新的部署包。
+
+## 3.5. 启动学习助手页面
+
+~~~bash
+python -m streamlit run src/ee6405/app/main.py      # 或 make app
+~~~
+
+页面分三块：
+
+- **问答**：左侧选检索方式（BM25 / 语义 / 混合）、周次和资料类型；回答里的 `[n]` 对应下方的引用来源。
+- **原文面板**：点一条引用，右侧打开原文并定位到被引用的位置——课件和测验显示 PDF 的那一页，
+  视频跳到对应时间点并高亮转写片段，notebook 滚动到对应单元格。
+  需要把 `EE6405_Raw_Dataset.zip` 解压到 `data/raw/`；没有原始文件时面板只显示索引里的文字。
+- **课程知识地图**：Obsidian 风格的关系图。节点是课程资料和概念（TF-IDF、BERT、RAG ……），
+  连线表示"这份资料讲到了这个概念"，所以两份资料通过共同的概念相连。
+  提问后地图切换为本次问答的视角：当前问题 → 被引用的资料 → 涉及的概念 → 讲到同一概念的其他资料。
+  概念来自固定词表（`src/ee6405/kg/course_map.py`），不调用 LLM；侧边栏的"概念关系"视图则是让 LLM 从检索片段里抽三元组。
+
+语义 / 混合检索要先装 `requirements-ml.txt`，否则页面会自动退回 BM25。
+
+## 3.6. 重建索引（一般不需要）
 
 只有在修改了数据处理逻辑时才需要。需要先拿到原始数据集 `EE6405_Raw_Dataset.zip`（841 MB），
 解压到 `data/raw/`，然后：
@@ -194,7 +215,7 @@ python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
 
 有 GPU 约 1 分钟，纯 CPU 会慢很多。
 
-## 3.6. 已知限制
+## 3.7. 已知限制
 
 - **图表、架构图、公式没有进索引。** 目前是纯文本 RAG，PDF 里的图和视频画面都没有提取。
   学生问"Transformer 架构图长什么样"时只能给出文字描述。
@@ -210,7 +231,8 @@ EE6405-TABLE8
 │   ├── ingest/      数据处理：各模态的加载与分块
 │   ├── rag/         检索：SQLite 索引、向量、三路检索器
 │   ├── agent/       推理链路：LLM 调用、记忆、问答链
-│   ├── kg/          知识图谱抽取（可视化用）
+│   ├── kg/          课程知识地图（资料 ↔ 概念）、三元组抽取与渲染
+│   ├── app/         Streamlit 页面：问答、原文面板、知识地图
 │   └── eval/        评测：检索指标、MCQ 准确率
 ├── scripts/         视频转写、术语后处理、OCR
 ├── docs/            设计文档

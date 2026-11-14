@@ -9,3 +9,7 @@ baseRadius = "8px"
 
 [server]
 headless = true
+
+[client]
+# hide the Deploy button / dev menu so the page reads as a product
+toolbarMode = "minimal"
