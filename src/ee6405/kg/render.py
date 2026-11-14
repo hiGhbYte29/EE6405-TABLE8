@@ -196,6 +196,8 @@ _TEMPLATE = r"""<!doctype html>
     }));
   }
   net.on("zoom", refreshLabels);
+  // focus() animates the zoom without firing "zoom", which left labels sized for the old scale
+  net.on("animationFinished", refreshLabels);
   net.once("stabilizationIterationsDone", function () { net.fit({ animation: false }); labelsOn = null; refreshLabels(); });
 
   // --- neighbourhood highlight ---------------------------------------------

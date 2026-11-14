@@ -3,6 +3,58 @@
 这是EE6405的课程项目仓库，使用GitHub来管理项目以方便小组合作和向Prof解释我们每个人在小组项目中的贡献
 
 v10.30.1
+# 0. 项目一览 ✨
+
+**EE6405 学习助手**：一个面向 NTU EE6405（自然语言处理）课程的 RAG 问答助手。
+它依据检索到的课程资料回答，回答里的引用可以点回原文，并把课程资料和概念连成一张可以探索的知识地图。
+
+![课程知识地图](docs/images/knowledge_map.png)
+
+<p align="center"><em>课程知识地图：95 份课程资料与 68 个概念，资料通过共同涉及的概念相连</em></p>
+
+## 它能做什么
+
+| | |
+| --- | --- |
+| **有出处的回答** | 检索 1,863 个课程片段（课件、视频转写、代码、测验），回答里的 `[n]` 对应具体的页码、时间点或代码单元格 |
+| **三种检索方式** | BM25、语义（BGE-m3）、混合（RRF）；中文提问也能检索英文课件 |
+| **点开就是原文** | 课件显示 PDF 的那一页，视频跳到那一秒，notebook 滚动到那个单元格 |
+| **知识地图** | 提问后地图切换到本次问答的视角：问题 → 被引用的资料 → 概念 → 讲到同一概念的其他资料 |
+
+## 界面
+
+![问答与本次问答的知识地图](docs/images/ui_answer.png)
+
+<p align="center"><em>左：带引用的回答。右：本次问答的知识地图，紫色圆环是被引用的资料</em></p>
+
+![点击引用打开原文](docs/images/ui_source_panel.png)
+
+<p align="center"><em>点击引用，右侧打开被引用的那一页课件</em></p>
+
+![在知识地图里聚焦一个概念](docs/images/knowledge_map_focus.png)
+
+<p align="center"><em>搜索或点击一个概念，高亮所有讲到它的资料</em></p>
+
+## 系统流程
+
+![系统流程](reports/figures/00_system_pipeline.png)
+
+## 评测结果
+
+在 4 个测试集（共 152 题）上，对比 8 个模型"不检索"和"用我们的 RAG"的答题正确率：
+**所有模型都有提升，平均从 85.5% 到 94.7%**，每个模型的差异都通过了 McNemar 检验。
+
+![每个模型用上 RAG 前后的正确率](reports/figures/01_rag_effect_by_model.png)
+
+| | |
+| --- | --- |
+| ![三种检索器对比](reports/figures/02_retriever_comparison.png) | ![RAG 修对与改错的题数](reports/figures/03_helped_vs_hurt.png) |
+
+提升主要来自课程专属内容（80% → 98%）；通用 NLP 知识模型本来就会，在读代码的题上几乎没有差别。
+RAG 也会把少数原本答对的题改错。完整的方法、结果和局限见 [`docs/EVALUATION.md`](docs/EVALUATION.md)。
+
+---
+
 # 1. 如何使用这个项目🚀
 
 **统一在本仓库开分支协作，不用 fork。** 需要 push 权限的话，找组长把你加成 collaborator。
@@ -203,7 +255,18 @@ python -m streamlit run src/ee6405/app/main.py      # 或 make app
 
 语义 / 混合检索要先装 `requirements-ml.txt`，否则页面会自动退回 BM25。
 
-## 3.6. 重建索引（一般不需要）
+## 3.6. 评测：RAG 到底带来了什么
+
+4 个测试集（练习题、Coding Quiz、理论测验、课程专属事实题，共 152 题）× 8 个模型 × 3 种检索器。
+所有模型用上 RAG 后都有提升，8 个模型平均从 85.5% 到 94.7%。
+
+- 方法、结果、失败案例和局限：[`docs/EVALUATION.md`](docs/EVALUATION.md)
+- 全部结果表（自动生成）：[`reports/bench/RESULTS.md`](reports/bench/RESULTS.md)
+- 图表：`reports/figures/`
+
+测试集、提示词和模型原始回答含课程考题内容，不入 Git。
+
+## 3.7. 重建索引（一般不需要）
 
 只有在修改了数据处理逻辑时才需要。需要先拿到原始数据集 `EE6405_Raw_Dataset.zip`（841 MB），
 解压到 `data/raw/`，然后：
@@ -215,7 +278,7 @@ python -m ee6405.ingest.pipeline --source data/raw/EE6405_Raw_Dataset --rebuild
 
 有 GPU 约 1 分钟，纯 CPU 会慢很多。
 
-## 3.7. 已知限制
+## 3.8. 已知限制
 
 - **图表、架构图、公式没有进索引。** 目前是纯文本 RAG，PDF 里的图和视频画面都没有提取。
   学生问"Transformer 架构图长什么样"时只能给出文字描述。

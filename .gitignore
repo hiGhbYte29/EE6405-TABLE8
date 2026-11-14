@@ -37,8 +37,10 @@ data/processed/*
 models/
 
 # ---- Reports ----
-reports/figures/*
-!reports/figures/.gitkeep
+# Benchmark prompts and question text are course assessment content: keep them
+# out of Git. Scores, per-question outcomes and figures are fine to commit.
+reports/bench/jobs*.jsonl
+reports/bench/questions.json
 
 # ---- OS ----
 .DS_Store
@@ -52,3 +54,4 @@ dist/
 
 # ---- Local AI assistant notes ----
 CLAUDE.md
+reports/bench/responses_*.jsonl
